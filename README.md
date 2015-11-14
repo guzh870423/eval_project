@@ -14,3 +14,7 @@ main.py - routes urls.
     /reports/semester_id/week   reports for semester_id, week where semester_id and week are int
     
 templates/ - html templates
+
+
+# SETUP steps:
+I am using a virtual machine system provided by udacity course, in which all needed  tools were pre-installed. I assume you need install ubuntu first if you want to setup your own.
