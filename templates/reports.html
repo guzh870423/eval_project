@@ -1,0 +1,20 @@
+<html>
+  <body>
+    <h1>Reports for semester {{semesterName}}, week {{week}}</h1>
+    <table border="1 px solid black">
+        <caption>Average ranks (normalized by number of reviews given by each evaler. Range: (0,1])</caption>
+        <tr>
+            <th>student</th>
+            <th>number of reveiws</th>
+            <th>normalized average rank</th>
+        </tr>
+        {% for student in sortedByAverageRank %}
+        <tr>
+            <td>{{student}}</td>
+            <td>{{len(normalizedRanks[student])}}</td>
+            <td>{{averageRank[student]}}</td>
+        </tr>
+        {% endfor %}
+    </table>
+  </body>
+</html>

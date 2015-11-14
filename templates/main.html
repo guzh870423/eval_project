@@ -1,0 +1,27 @@
+<html>
+<body>
+
+<form type="post">
+    <div>
+        <p>Semester:</p>
+        <select name="semester">
+        {% for semester in semesters %}
+           
+            <option value="{{ str(semester.year) + semester.season }}">{{ str(semester.year) + semester.season }}</option>
+        {% endfor %}
+        </select>
+    </div>
+    <div>
+        <p>week:</p>
+        <select name="week">
+        {% for week in weeks %}
+            <option value="{{ str(week[0]) }}">{{ str(week[0]) }}</option>
+        {% endfor %}
+        </select>
+    </div>
+    <br>
+    
+    <input type="submit" name="submit">
+</form>
+</body>
+</html>
