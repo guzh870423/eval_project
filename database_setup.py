@@ -5,6 +5,12 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy import create_engine
 from sqlalchemy.sql import func
+from ConfigParser import SafeConfigParser
+
+parser = SafeConfigParser()
+parser.read('config.ini')
+username = parser.get('login', 'username');
+password = parser.get('login', 'password');
 
 Base = declarative_base()
 
@@ -123,7 +129,7 @@ class Group_Student(Base):
             'group_id': self.group_id,
         }
 if __name__ == '__main__':    
-    engine = create_engine('mysql://root:password@localhost:3306/eval')
+    engine = create_engine('mysql://' + username + ':' + password + '@localhost:3306/eval') 
 
     Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)
