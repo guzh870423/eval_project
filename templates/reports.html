@@ -2,21 +2,52 @@
   <body>
     <h1>Reports for semester {{semesterName}}, week {{currentWeek}}</h1>
     <table border="1 px solid black">
-        <caption>Average ranks (normalized by number of reviews given by each evaler. Range: (0,1])</caption>
+        <caption>Average ranks <br>
+            normalized rank =  rank / number of reviews given by evaler. Range: (0,1]<br>
+            normalized token = token * number of reviews given by evaler.
+        </caption>
         <tr>
             <th>student</th>
             <th>number of reveiws</th>
             <th>unweighted average rank</th>
             <th>weighted rank</th>
+            <th>norm. average token</th>
         </tr>
         {% for student in students %}
         <tr>
-            <td>{{student}}</td>
-            <td>{{len(normalizedRanks[currentWeek-1][student])}}</td>
-            <td>{{averageRank[currentWeek-1][student]}}</td>
-            <td>{{weightedRank[student]}}</td>
+            <td>{{student.user_name }}</td>
+            <td>{{len(reversedEvals[currentWeek-1][student.user_name])}}</td>
+            <td>{{averageRank[currentWeek-1][student.user_name]}}</td>
+            <td>{{weightedRank[student.user_name]}}</td>
+            <td>{{averageToken[currentWeek-1][student.user_name]}}</td>
         </tr>
         {% endfor %}
     </table>
+    {% for student in students %}
+        <br>
+        <table border="1 px solid black">
+            <caption>Evalee ID: {{ student.user_name }}</caption>
+            <tr>
+                <th>Evaler ID</th>
+                <th>team week</th>
+                <th>No. of reviews</th>
+                <th>Norm. rank</th>
+                <th>Norm. token</th>
+                <th>Adj</th>
+                <th>Description</th>
+            </tr>
+            {% for evaler in sortedEvaler[currentWeek-1][student.user_name] %}
+                <tr>
+                    <th>{{ evaler }}</th>
+                    <th>{{ connection[student.user_name][evaler] }}</th>
+                    <th>{{ len(evals[currentWeek-1][evaler]) }}</th>
+                    <th>{{ reversedEvals[currentWeek-1][student.user_name][evaler][1] }}</th>
+                    <th>{{ reversedEvals[currentWeek-1][student.user_name][evaler][2] }}</th>
+                    <th>{{ reversedEvals[currentWeek-1][student.user_name][evaler][0].adj }}</th>
+                    <th>{{ reversedEvals[currentWeek-1][student.user_name][evaler][0].description }}</th>
+                </tr>
+            {% endfor %}
+        </table>
+    {% endfor %}
   </body>
 </html>

@@ -30,14 +30,20 @@ def main():
 def reports(semester_id, currentWeek):
     semester = session.query(Semester).filter_by(id=semester_id).one()
     print type(currentWeek)
-    # list of students' user_name
+    # list of students
     students = []
     # Evaluation dictionary: evals[currentWeek][evaler][evalee] = evaluation
     evals = []
-    # normalized ranks dictionary: normalizedRanks[Week][evalee][evaler] = normalized_rank
-    normalizedRanks = []
+    # normalized ranks dictionary: reversedEvals[Week][evalee][evaler][0] = evaluation
+    #                              reversedEvals[Week][evalee][evaler][1] = normalized_rank
+    #                              reversedEvals[Week][evalee][evaler][1] = normalized_token
+    reversedEvals = []
+    # sort evaler according to current week and rank
+    sortedEvaler = []
     # average rank: averageRank[week][student]
     averageRank = []
+    # average token: averageToken[week][student]
+    averageToken = []
     # which weeks do two students work together, connection[student1][student2] = [week1, week2]
     connection = {}
     # weighted rank
@@ -46,21 +52,14 @@ def reports(semester_id, currentWeek):
     enrollments = session.query(Enrollment).filter_by(semester_id=semester_id).all()
     for enrollment in enrollments:
         student = enrollment.user_name
-        students.append(enrollment.user_name)
+        students.append(enrollment.student)
     
-    for previousWeek in range(1, currentWeek+1):
-        evalsOneWeek, normalizedRanksOneWeek, averageRankOneWeek = queryEval(semester_id, currentWeek, students)
-        evals.append(evalsOneWeek)
-        normalizedRanks.append(normalizedRanksOneWeek)
-        averageRank.append(averageRankOneWeek)
-    #sortedByAverageRank = sorted(averageRank, key=averageRank.get)
-    #print sortedByAverageRank
-
-    #intialize connection
+        #intialize connection
     for student1 in students:
-        connection[student1] = {}
+        connection[student1.user_name] = {}
         for student2 in students:
-            connection[student1][student2] = []
+            connection[student1.user_name][student2.user_name] = []
+    
     #assign connection
     groups = session.query(Group).all()
     for group in groups:
@@ -68,37 +67,61 @@ def reports(semester_id, currentWeek):
         for student1 in studentsInGroup:
             for student2 in studentsInGroup:
                 if student1 != student2:
-                    connection[student1.user_name][student2.user_name].append(group.week)
+                    connection[student1.user_name][student2.user_name].append(int(group.week))
+                   
+    for week in range(1, currentWeek+1):
+        evalsOneWeek, reversedEvalsOneWeek, sortedEvalerOneWeek, averageRankOneWeek, averageTokenOneWeek = queryEval(semester_id, week, students, connection)
+        evals.append(evalsOneWeek)
+        reversedEvals.append(reversedEvalsOneWeek)
+        sortedEvaler.append(sortedEvalerOneWeek)
+        averageRank.append(averageRankOneWeek)
+        averageToken.append(averageTokenOneWeek)
+    #sortedByAverageRank = sorted(averageRank, key=averageRank.get)
+    #print sortedByAverageRank
+
+
                     
     # compute weighted average rank
-    for evalee in normalizedRanks[currentWeek-1]:
+    for evalee in reversedEvals[currentWeek-1]:
         weightedRank[evalee] = 0
         weightsSum = 0
-        for evaler, rank in normalizedRanks[currentWeek-1][evalee].iteritems():
+        for evaler in reversedEvals[currentWeek-1][evalee]:
+            rank = reversedEvals[currentWeek-1][evalee][evaler][1]
             weeks = connection[evalee][evaler]
             for week in weeks:                
                 weightedRank[evalee] += rank * weightsForAverageRank[week-1]
                 weightsSum += weightsForAverageRank[week-1]
-        weightedRank[evalee] /= weightsSum
+        weightedRank[evalee] = round(weightedRank[evalee] / weightsSum, 3)
 
     return render_template('reports.html',
         semesterName=str(semester.year)+semester.season,
         currentWeek=currentWeek,
         students=students,
-        normalizedRanks=normalizedRanks,
+        connection=connection,
+        evals=evals,
+        reversedEvals=reversedEvals,
+        sortedEvaler=sortedEvaler,
         averageRank=averageRank,
+        averageToken=averageToken,
         len=len,
         weightedRank=weightedRank,
         )
 
-def queryEval(semester_id, week, students):
+def queryEval(semester_id, week, students, connection):
     # Evaluation dictionary: evalsOneWeek[evaler][evalee] = evaluation
     evalsOneWeek = {}
-    # normalized ranks dictionary: normalizedRanksOneWeek[evalee][evaler] = normalized_rank
-    normalizedRanksOneWeek = {}
+    # normalized ranks dictionary: reversedEvalsOneWeek[evalee][evaler][0] = evaluation
+    #                           reversedEvalsOneWeek[evalee][evaler][1] = normalized_rank
+    #                           reversedEvalsOneWeek[evalee][evaler][2] = normalized_token
+    reversedEvalsOneWeek = {}
+    # sort evaler according to current week and rank
+    sortedEvalerOneWeek = {}
     # average rank
     averageRankOneWeek = {}
-    for evaler in students:
+    # average token
+    averageTokenOneWeek = {}
+    for student in students:
+        evaler = student.user_name
         evalsOneWeek[evaler] = {}
         evalsFromOneStudent = session.query(Evaluation).filter_by(evaler_id=evaler, week=int(week), semester_id=semester_id).all()
         for eval in evalsFromOneStudent:
@@ -106,16 +129,38 @@ def queryEval(semester_id, week, students):
             evalsOneWeek[evaler][evalee] = eval
         
         for evalee, eval in evalsOneWeek[evaler].iteritems():
-            if not normalizedRanksOneWeek.get(evalee):
-                normalizedRanksOneWeek[evalee] = {}
-            normalizedRanksOneWeek[evalee][evaler] = float(eval.rank) / len(evalsOneWeek[evaler])
+            if not reversedEvalsOneWeek.get(evalee):
+                reversedEvalsOneWeek[evalee] = {}
+            reversedEvalsOneWeek[evalee][evaler] = []
+            reversedEvalsOneWeek[evalee][evaler].append(eval)
+            reversedEvalsOneWeek[evalee][evaler].append(round(float(eval.rank) / len(evalsOneWeek[evaler]), 3))
+            reversedEvalsOneWeek[evalee][evaler].append(eval.token * len(evalsOneWeek[evaler]))
 
-    for evalee in normalizedRanksOneWeek:
-        for evaler, rank in normalizedRanksOneWeek[evalee].iteritems():
-            if not averageRankOneWeek.get(evalee):
-                averageRankOneWeek[evalee] = 0
-            averageRankOneWeek[evalee] += rank / len(normalizedRanksOneWeek[evalee])
-    return evalsOneWeek, normalizedRanksOneWeek, averageRankOneWeek
+    #sort evaler for each evalee
+    for evalee in reversedEvalsOneWeek:
+        sortedEvalerOneWeek[evalee] = []
+        #sort by rank that evaler gives to evalee
+        sortedByRank = sorted(reversedEvalsOneWeek[evalee].items(), key=lambda e: e[1][1])
+        #put current team members top
+        for item in sortedByRank:
+            evaler = item[0]
+            if week in connection[evalee][evaler]:
+                sortedEvalerOneWeek[evalee].append(evaler)
+        # non-current team members
+        for item in sortedByRank:
+            evaler = item[0]
+            if week not in connection[evalee][evaler]:
+                sortedEvalerOneWeek[evalee].append(evaler)
+    
+    for evalee in reversedEvalsOneWeek:
+        averageRankOneWeek[evalee] = 0
+        averageTokenOneWeek[evalee] = 0
+        for evaler in reversedEvalsOneWeek[evalee]:
+            rank = reversedEvalsOneWeek[evalee][evaler][1]
+            token = reversedEvalsOneWeek[evalee][evaler][2]
+            averageRankOneWeek[evalee] += rank / len(reversedEvalsOneWeek[evalee])
+            averageTokenOneWeek[evalee] += token / len(reversedEvalsOneWeek[evalee])
+    return evalsOneWeek, reversedEvalsOneWeek, sortedEvalerOneWeek, averageRankOneWeek, averageTokenOneWeek
         
 if __name__ == '__main__':
     app.debug = True
