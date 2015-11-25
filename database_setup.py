@@ -68,6 +68,65 @@ class Evaluation(Base):
     evalee = relationship(Student, foreign_keys='Evaluation.evalee_id')
     semester = relationship(Semester)
     
+    def parse(self, encryptedEval):
+        self.evaler_id = encryptedEval.evaler_id
+        self.evalee_id = encryptedEval.evalee_id
+        self.week = encryptedEval.week
+        #self.rank = encryptedEval.rank
+        #self.token = encryptedEval.token
+        #self.description = encryptedEval.description
+        self.submission_time = encryptedEval.submission_time
+        #self.adj = encryptedEval.adj
+        self.semester_id = encryptedEval.semester_id
+        self.evaler = encryptedEval.evaler
+        self.evalee = encryptedEval.evalee
+        self.semester = encryptedEval.semester
+        
+    @property
+    def serialize(self):
+        """Return object data in easily serializeable format"""
+        return {
+            'evaler_id': self.evaler_id,
+            #'evalee_id': self.evalee_id,
+            'week': self.week,
+            'rank': self.rank,
+            'token': self.token,
+            'description': self.description,
+            'adj': self.adj,
+            'type': self.type,
+        }
+        
+class EncryptedEvaluation(Base):
+    __tablename__ = 'encrypted_evaluation'
+
+    evaler_id = Column(VARCHAR(10), ForeignKey(Student.user_name, onupdate="CASCADE", ondelete="CASCADE"), primary_key=True, autoincrement=False)
+    evalee_id = Column(VARCHAR(10), ForeignKey(Student.user_name, onupdate="CASCADE", ondelete="CASCADE"), primary_key=True, autoincrement=False)
+    week = Column(Integer(2), primary_key=True, autoincrement=False)
+    rank = Column(String(128), nullable=False)
+    token = Column(String(128), nullable=False)
+    description = Column(String(4096), nullable=False)
+    submission_time = Column(TIMESTAMP, nullable=False, server_default=func.now(), onupdate=func.current_timestamp())
+    adj = Column(String(128), nullable=False)
+    semester_id = id = Column(Integer(11), ForeignKey('semester.id', onupdate="CASCADE", ondelete="CASCADE"), primary_key=True)
+    #manager_id =  Column(Integer(2), ForeignKey(Manager_Eval.id, , onupdate="CASCADE", ondelete="CASCADE"))
+    evaler = relationship(Student, foreign_keys='EncryptedEvaluation.evaler_id')
+    evalee = relationship(Student, foreign_keys='EncryptedEvaluation.evalee_id')
+    semester = relationship(Semester)
+    
+    def parse(self, rawEval):
+        self.evaler_id = rawEval.evaler_id
+        self.evalee_id = rawEval.evalee_id
+        self.week = rawEval.week
+        #self.rank = rawEval.rank
+        #self.token = rawEval.token
+        #self.description = rawEval.description
+        self.submission_time = rawEval.submission_time
+        #self.adj = rawEval.adj
+        self.semester_id = rawEval.semester_id
+        self.evaler = rawEval.evaler
+        self.evalee = rawEval.evalee
+        self.semester = rawEval.semester
+        
     @property
     def serialize(self):
         """Return object data in easily serializeable format"""

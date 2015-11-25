@@ -1,8 +1,9 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from database_setup import Student, Base, Group, Semester, Group_Student, Enrollment, Evaluation
+from database_setup import Student, Base, Group, Semester, Group_Student, Enrollment, Evaluation, EncryptedEvaluation
 from ConfigParser import SafeConfigParser
+from encrypt import EvalCipher
 
 parser = SafeConfigParser()
 parser.read('config.ini')
@@ -52,18 +53,26 @@ eval9 = Evaluation(evaler=student2, evalee=student1, week=3, rank=1,token=3, des
 eval10 = Evaluation(evaler=student2, evalee=student3, week=3, rank=2,token=1, description="i'd like to work", adj="good", semester=semester1)
 eval11 = Evaluation(evaler=student3, evalee=student1, week=3, rank=1,token=3, description="i'd love to work", adj="great", semester=semester1)
 eval12 = Evaluation(evaler=student3, evalee=student2, week=3, rank=2,token=1, description="i'd like to work", adj="good", semester=semester1)
-session.add(eval1)
-session.add(eval2)
-session.add(eval3)
-session.add(eval4)
-session.add(eval5)
-session.add(eval6)
-session.add(eval7)
-session.add(eval8)
-session.add(eval9)
-session.add(eval10)
-session.add(eval11)
-session.add(eval12)
+evals = []
+evals.append(eval1)
+evals.append(eval2)
+evals.append(eval3)
+evals.append(eval4)
+evals.append(eval5)
+evals.append(eval6)
+evals.append(eval7)
+evals.append(eval8)
+evals.append(eval9)
+evals.append(eval10)
+evals.append(eval11)
+evals.append(eval12)
+
+key = 'keyskeyskeyskeys'
+evalCipher = EvalCipher(key)
+
+for eval in evals:
+    encryptedEval = evalCipher.encryptEval(eval)
+    session.add(encryptedEval)
 session.commit()
 
 

@@ -1,8 +1,9 @@
 from flask import Flask, render_template, url_for, request, redirect
 from sqlalchemy import create_engine, distinct
 from sqlalchemy.orm import sessionmaker
-from database_setup import Student, Base, Group, Semester, Group_Student, Enrollment, Evaluation
+from database_setup import Student, Base, Group, Semester, Group_Student, Enrollment, Evaluation, EncryptedEvaluation
 from ConfigParser import SafeConfigParser
+from encrypt import EvalCipher
 
 parser = SafeConfigParser()
 parser.read('config.ini')
@@ -19,6 +20,9 @@ Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
+key = parser.get('security', 'key')
+evalCipher = EvalCipher(key)
+
 @app.route('/main')
 def main():
     semesters = session.query(Semester).all()
@@ -29,7 +33,6 @@ def main():
 @app.route('/reports/<int:semester_id>/<int:currentWeek>', methods=['GET', 'POST'])
 def reports(semester_id, currentWeek):
     semester = session.query(Semester).filter_by(id=semester_id).one()
-    print type(currentWeek)
     # list of students
     students = []
     # Evaluation dictionary: evals[currentWeek][evaler][evalee] = evaluation
@@ -44,8 +47,6 @@ def reports(semester_id, currentWeek):
     averageRank = []
     # average token: averageToken[week][student]
     averageToken = []
-    # which weeks do two students work together, connection[student1][student2] = [week1, week2]
-    connection = {}
     # weighted rank
     weightedRank = {}
     
@@ -53,22 +54,10 @@ def reports(semester_id, currentWeek):
     for enrollment in enrollments:
         student = enrollment.user_name
         students.append(enrollment.student)
+     
+    # which weeks do two students work together, connection[student1][student2] = [week1, week2]
+    connection = queryConnection(students)
     
-        #intialize connection
-    for student1 in students:
-        connection[student1.user_name] = {}
-        for student2 in students:
-            connection[student1.user_name][student2.user_name] = []
-    
-    #assign connection
-    groups = session.query(Group).all()
-    for group in groups:
-        studentsInGroup = session.query(Group_Student).filter_by(group_id=group.id).all()
-        for student1 in studentsInGroup:
-            for student2 in studentsInGroup:
-                if student1 != student2:
-                    connection[student1.user_name][student2.user_name].append(int(group.week))
-                   
     for week in range(1, currentWeek+1):
         evalsOneWeek, reversedEvalsOneWeek, sortedEvalerOneWeek, averageRankOneWeek, averageTokenOneWeek = queryEval(semester_id, week, students, connection)
         evals.append(evalsOneWeek)
@@ -107,6 +96,26 @@ def reports(semester_id, currentWeek):
         weightedRank=weightedRank,
         )
 
+# get connection matrix for students
+def queryConnection(students):
+    connection = {}
+    #intialize connection
+    for student1 in students:
+        connection[student1.user_name] = {}
+        for student2 in students:
+            connection[student1.user_name][student2.user_name] = []
+    
+    #assign connection
+    groups = session.query(Group).all()
+    for group in groups:
+        studentsInGroup = session.query(Group_Student).filter_by(group_id=group.id).all()
+        for student1 in studentsInGroup:
+            for student2 in studentsInGroup:
+                if student1 != student2:
+                    connection[student1.user_name][student2.user_name].append(int(group.week))        
+    return connection
+                        
+# query evaluation for one week        
 def queryEval(semester_id, week, students, connection):
     # Evaluation dictionary: evalsOneWeek[evaler][evalee] = evaluation
     evalsOneWeek = {}
@@ -123,8 +132,9 @@ def queryEval(semester_id, week, students, connection):
     for student in students:
         evaler = student.user_name
         evalsOneWeek[evaler] = {}
-        evalsFromOneStudent = session.query(Evaluation).filter_by(evaler_id=evaler, week=int(week), semester_id=semester_id).all()
-        for eval in evalsFromOneStudent:
+        evalsFromOneStudent = session.query(EncryptedEvaluation).filter_by(evaler_id=evaler, week=int(week), semester_id=semester_id).all()
+        for encryptedEval in evalsFromOneStudent:
+            eval = evalCipher.decryptEval(encryptedEval)
             evalee = eval.evalee_id
             evalsOneWeek[evaler][evalee] = eval
         
@@ -135,7 +145,7 @@ def queryEval(semester_id, week, students, connection):
             reversedEvalsOneWeek[evalee][evaler].append(eval)
             reversedEvalsOneWeek[evalee][evaler].append(round(float(eval.rank) / len(evalsOneWeek[evaler]), 3))
             reversedEvalsOneWeek[evalee][evaler].append(eval.token * len(evalsOneWeek[evaler]))
-
+    
     #sort evaler for each evalee
     for evalee in reversedEvalsOneWeek:
         sortedEvalerOneWeek[evalee] = []
