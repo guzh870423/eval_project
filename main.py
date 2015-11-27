@@ -23,12 +23,20 @@ session = DBSession()
 key = parser.get('security', 'key')
 evalCipher = EvalCipher(key)
 
-@app.route('/main')
+@app.route('/main', methods=['GET', 'POST'])
 def main():
-    semesters = session.query(Semester).all()
+    if request.method == 'POST':
+        year_season = request.form['semester']
+        year = int(year_season.split(" ")[0])
+        season = year_season.split(" ")[1]
+        semester = session.query(Semester).filter_by(season=season, year=year).one()
+        week=request.form['week']
+        return redirect(url_for('reports', semester_id=semester.id, currentWeek=week))
+    else:
+        semesters = session.query(Semester).all()
   
-    weeks = session.query(distinct(Group.week)).all()
-    return render_template('main.html', semesters=semesters, weeks=weeks, str=str)
+        weeks = session.query(distinct(Group.week)).all()
+        return render_template('main.html', semesters=semesters, weeks=weeks, str=str)
         
 @app.route('/reports/<int:semester_id>/<int:currentWeek>', methods=['GET', 'POST'])
 def reports(semester_id, currentWeek):

@@ -1,13 +1,13 @@
 <html>
 <body>
 
-<form type="post">
+<form action="/main" method = 'post'>
     <div>
         <p>Semester:</p>
         <select name="semester">
         {% for semester in semesters %}
            
-            <option value="{{ str(semester.year) + semester.season }}">{{ str(semester.year) + semester.season }}</option>
+            <option value="{{ str(semester.year) + " " + semester.season }}">{{ str(semester.year) + semester.season }}</option>
         {% endfor %}
         </select>
     </div>

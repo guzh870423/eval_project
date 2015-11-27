@@ -108,3 +108,5 @@ session.add(group_student4)
 session.add(group_student5)
 session.add(group_student6)
 session.commit()
+
+session.close()
