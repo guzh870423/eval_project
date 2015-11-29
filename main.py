@@ -20,7 +20,7 @@ for weight in parser.get('constants', 'weights_for_average_rank').split(','):
 
 app = Flask(__name__)
 
-engine = create_engine('mysql://' + username + ':' + password + '@localhost:3306/eval') 
+engine = create_engine('mysql://' + username + ':' + password + '@localhost:3306/trial') 
 Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()

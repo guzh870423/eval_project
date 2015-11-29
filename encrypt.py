@@ -39,26 +39,26 @@ class EvalCipher():
     def encryptEval(self, eval):
         encryptedRank = self.encrypt(str(eval.rank))
         encryptedToken = self.encrypt(str(eval.token))
-        encryptedAdj = self.encrypt(str(eval.adj))
+        encryptedadjective = self.encrypt(str(eval.adjective))
         encryptedDescription = self.encrypt(eval.description)
         encryptedEval = EncryptedEvaluation()
         encryptedEval.parse(eval)
         encryptedEval.rank = encryptedRank
         encryptedEval.token = encryptedToken
-        encryptedEval.adj = encryptedAdj
+        encryptedEval.adjective = encryptedadjective
         encryptedEval.description = encryptedDescription
         return encryptedEval
         
     def decryptEval(self, encryptedEval):
         rank = self.decrypt(encryptedEval.rank)
         token = self.decrypt(encryptedEval.token)
-        adj = self.decrypt(encryptedEval.adj)
+        adjective = self.decrypt(encryptedEval.adjective)
         description = self.decrypt(encryptedEval.description)
         eval = Evaluation()
         eval.parse(encryptedEval)
         eval.rank = int(rank)
         eval.token = int(token)
-        eval.adj = adj
+        eval.adjective = adjective
         eval.description = description
         return eval
         
@@ -70,6 +70,6 @@ if __name__ == '__main__':
     student1 = Student(user_name="adam")
     student2 = Student(user_name="bob")
     semester1 = Semester(year=2015, season="Fall")    
-    eval1 = Evaluation(evaler=student1, evalee=student2, week=1, rank=1,token=4, description="i'd love to work", adj="great", semester=semester1)
+    eval1 = Evaluation(evaler=student1, evalee=student2, week=1, rank=1,token=4, description="i'd love to work", adjective="great", semester=semester1)
     print student1.user_name
     print pc.encryptEval(eval1).evaler_id

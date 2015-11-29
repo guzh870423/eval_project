@@ -97,7 +97,7 @@ class Evaluation(Base):
         #self.token = encryptedEval.token
         #self.description = encryptedEval.description
         self.submission_time = encryptedEval.submission_time
-        #self.adj = encryptedEval.adj
+        #self.adjective = encryptedEval.adjective
         self.manager_id = encryptedEval.manager_id
         self.semester_id = encryptedEval.semester_id
         self.evaler = encryptedEval.evaler
@@ -114,7 +114,7 @@ class Evaluation(Base):
             'rank': self.rank,
             'token': self.token,
             'description': self.description,
-            'adj': self.adj,
+            'adjective': self.adjective,
         }
         
 class EncryptedEvaluation(Base):
@@ -127,7 +127,7 @@ class EncryptedEvaluation(Base):
     token = Column(String(128), nullable=False)
     description = Column(String(4096), nullable=False)
     submission_time = Column(TIMESTAMP, nullable=False, server_default=func.now(), onupdate=func.current_timestamp())
-    adj = Column(String(128), nullable=False)
+    adjective = Column(String(128), nullable=False)
     manager_id =  Column(Integer, ForeignKey('manager_eval.manager_id', onupdate="CASCADE", ondelete="CASCADE"))
     semester_id = Column(Integer, ForeignKey('semester.id', onupdate="CASCADE", ondelete="CASCADE"), primary_key=True)
     evaler = relationship(Student, foreign_keys='EncryptedEvaluation.evaler_id')
@@ -143,7 +143,7 @@ class EncryptedEvaluation(Base):
         #self.token = rawEval.token
         #self.description = rawEval.description
         self.submission_time = rawEval.submission_time
-        #self.adj = rawEval.adj
+        #self.adjective = rawEval.adjective
         self.manager_id = rawEval.manager_id
         self.semester_id = rawEval.semester_id
         self.evaler = rawEval.evaler
@@ -160,7 +160,7 @@ class EncryptedEvaluation(Base):
             'rank': self.rank,
             'token': self.token,
             'description': self.description,
-            'adj': self.adj,
+            'adjective': self.adjective,
         }
         
     
@@ -215,7 +215,7 @@ class Group_Student(Base):
         
     
 if __name__ == '__main__':    
-    engine = create_engine('mysql://' + username + ':' + password + '@localhost:3306/eval') 
+    engine = create_engine('mysql://' + username + ':' + password + '@localhost:3306/trial') 
 
     Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)

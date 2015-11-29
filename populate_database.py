@@ -10,7 +10,7 @@ parser.read('config.ini')
 username = parser.get('login', 'username');
 password = parser.get('login', 'password');
 
-engine = create_engine('mysql://' + username + ':' + password + '@localhost:3306/eval') 
+engine = create_engine('mysql://' + username + ':' + password + '@localhost:3306/trial') 
 # Bind the engine to the metadata of the Base class so that the
 # declaratives can be accessed through a DBSession instance
 Base.metadata.bind = engine
@@ -41,18 +41,18 @@ session.add(semester1)
 session.commit()
 
 #evals
-eval1 = Evaluation(evaler=student1, evalee=student2, week=1, rank=1,token=4, description="i'd love to work", adj="great", semester=semester1)
-eval2 = Evaluation(evaler=student2, evalee=student1, week=1, rank=1,token=4, description="i'd like to work", adj="good", semester=semester1)
-eval3 = Evaluation(evaler=student2, evalee=student1, week=2, rank=1,token=3, description="i'd love to work", adj="great", semester=semester1)
-eval4 = Evaluation(evaler=student2, evalee=student3, week=2, rank=2,token=1, description="i'd like to work", adj="good", semester=semester1)
-eval5 = Evaluation(evaler=student1, evalee=student2, week=2, rank=1,token=4, description="i'd love to work", adj="great", semester=semester1)
-eval6 = Evaluation(evaler=student3, evalee=student2, week=2, rank=1,token=4, description="i'd like to work", adj="good", semester=semester1)
-eval7 = Evaluation(evaler=student1, evalee=student2, week=3, rank=1,token=2, description="i'd love to work", adj="great", semester=semester1)
-eval8 = Evaluation(evaler=student1, evalee=student3, week=3, rank=2,token=2, description="i'd like to work", adj="good", semester=semester1)
-eval9 = Evaluation(evaler=student2, evalee=student1, week=3, rank=1,token=3, description="i'd love to work", adj="great", semester=semester1)
-eval10 = Evaluation(evaler=student2, evalee=student3, week=3, rank=2,token=1, description="i'd like to work", adj="good", semester=semester1)
-eval11 = Evaluation(evaler=student3, evalee=student1, week=3, rank=1,token=3, description="i'd love to work", adj="great", semester=semester1)
-eval12 = Evaluation(evaler=student3, evalee=student2, week=3, rank=2,token=1, description="i'd like to work", adj="good", semester=semester1)
+eval1 = Evaluation(evaler=student1, evalee=student2, week=1, rank=1,token=4, description="i'd love to work", adjective="great", semester=semester1)
+eval2 = Evaluation(evaler=student2, evalee=student1, week=1, rank=1,token=4, description="i'd like to work", adjective="good", semester=semester1)
+eval3 = Evaluation(evaler=student2, evalee=student1, week=2, rank=1,token=3, description="i'd love to work", adjective="great", semester=semester1)
+eval4 = Evaluation(evaler=student2, evalee=student3, week=2, rank=2,token=1, description="i'd like to work", adjective="good", semester=semester1)
+eval5 = Evaluation(evaler=student1, evalee=student2, week=2, rank=1,token=4, description="i'd love to work", adjective="great", semester=semester1)
+eval6 = Evaluation(evaler=student3, evalee=student2, week=2, rank=1,token=4, description="i'd like to work", adjective="good", semester=semester1)
+eval7 = Evaluation(evaler=student1, evalee=student2, week=3, rank=1,token=2, description="i'd love to work", adjective="great", semester=semester1)
+eval8 = Evaluation(evaler=student1, evalee=student3, week=3, rank=2,token=2, description="i'd like to work", adjective="good", semester=semester1)
+eval9 = Evaluation(evaler=student2, evalee=student1, week=3, rank=1,token=3, description="i'd love to work", adjective="great", semester=semester1)
+eval10 = Evaluation(evaler=student2, evalee=student3, week=3, rank=2,token=1, description="i'd like to work", adjective="good", semester=semester1)
+eval11 = Evaluation(evaler=student3, evalee=student1, week=3, rank=1,token=3, description="i'd love to work", adjective="great", semester=semester1)
+eval12 = Evaluation(evaler=student3, evalee=student2, week=3, rank=2,token=1, description="i'd like to work", adjective="good", semester=semester1)
 evals = []
 evals.append(eval1)
 evals.append(eval2)

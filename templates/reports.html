@@ -33,7 +33,7 @@
                 <th>No. of reviews</th>
                 <th>Norm. rank</th>
                 <th>Norm. token</th>
-                <th>Adj</th>
+                <th>Adjective</th>
                 <th>Description</th>
             </tr>
             {% for evaler in sortedEvaler[currentWeek-1][student.user_name] %}
@@ -43,7 +43,7 @@
                     <th>{{ len(evals[currentWeek-1][evaler]) }}</th>
                     <th>{{ reversedEvals[currentWeek-1][student.user_name][evaler][1] }}</th>
                     <th>{{ reversedEvals[currentWeek-1][student.user_name][evaler][2] }}</th>
-                    <th>{{ reversedEvals[currentWeek-1][student.user_name][evaler][0].adj }}</th>
+                    <th>{{ reversedEvals[currentWeek-1][student.user_name][evaler][0].adjective }}</th>
                     <th>{{ reversedEvals[currentWeek-1][student.user_name][evaler][0].description }}</th>
                 </tr>
             {% endfor %}
