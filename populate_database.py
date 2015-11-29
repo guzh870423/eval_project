@@ -7,10 +7,13 @@ from encrypt import EvalCipher
 
 parser = SafeConfigParser()
 parser.read('config.ini')
-username = parser.get('login', 'username');
-password = parser.get('login', 'password');
+username = parser.get('login', 'username')
+password = parser.get('login', 'password')
+schema = parser.get('login', 'schema')
+host = parser.get('login', 'host')
+port = parser.get('login', 'port')
 
-engine = create_engine('mysql://' + username + ':' + password + '@localhost:3306/trial') 
+engine = create_engine('mysql://' + username + ':' + password + '@' + host +':' + port + '/' + schema) 
 # Bind the engine to the metadata of the Base class so that the
 # declaratives can be accessed through a DBSession instance
 Base.metadata.bind = engine

@@ -14,13 +14,17 @@ parser = SafeConfigParser()
 parser.read('config.ini')
 username = parser.get('login', 'username')
 password = parser.get('login', 'password')
+schema = parser.get('login', 'schema')
+host = parser.get('login', 'host')
+port = parser.get('login', 'port')
+
 weightsForAverageRank = []
 for weight in parser.get('constants', 'weights_for_average_rank').split(','):
     weightsForAverageRank.append(int(weight))
 
 app = Flask(__name__)
 
-engine = create_engine('mysql://' + username + ':' + password + '@localhost:3306/trial') 
+engine = create_engine('mysql://' + username + ':' + password + '@' + host +':' + port + '/' + schema) 
 Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
@@ -276,8 +280,8 @@ def login():
         pwd = request.form['password']
         users = session.query(Student).all()
         isAuthentic = session.query(exists().where(and_(Student.user_name==username, Student.login_key==pwd))).scalar()
-
-        if isAuthentic != 1:
+        print(isAuthentic)
+        if isAuthentic != True:
             error = 'Invalid Credentials. Please try again.'
         else:
             return redirect(url_for('list_all', username=username))
