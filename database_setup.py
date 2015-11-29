@@ -40,10 +40,10 @@ class Semester(Base):
     __table_args__ = (
             UniqueConstraint('year', 'season'),
             )
-    year = Column(Integer(4), nullable=False)
+    year = Column(Integer, nullable=False)
     season = Column(VARCHAR(11), nullable=False)
     create_time = Column(TIMESTAMP, nullable=False, server_default=func.now())
-    id = Column(Integer(11), primary_key=True, autoincrement=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     course_no = Column(VARCHAR(11), nullable=False)
     
     @property
@@ -58,17 +58,17 @@ class Semester(Base):
 
 class Manager_Eval(Base):
     __tablename__ = 'manager_eval'
-    manager_id = Column(Integer(11), primary_key=True, autoincrement=True)
-    approachable_attitude = Column(Integer(2), nullable=False)
-    team_communication = Column(Integer(2), nullable=False)
-    client_interaction = Column(Integer(2), nullable=False)
-    decision_making = Column(Integer(2), nullable=False)
-    resource_utilization = Column(Integer(2), nullable=False)
-    follow_up_to_completion = Column(Integer(2), nullable=False)
-    task_delegation_and_ownership = Column(Integer(2), nullable=False)
-    encourage_team_development = Column(Integer(2), nullable=False)
-    realistic_expectation = Column(Integer(2), nullable=False)
-    performance_under_stress = Column(Integer(2), nullable=False)
+    manager_id = Column(Integer, primary_key=True, autoincrement=True)
+    approachable_attitude = Column(Integer, nullable=False)
+    team_communication = Column(Integer, nullable=False)
+    client_interaction = Column(Integer, nullable=False)
+    decision_making = Column(Integer, nullable=False)
+    resource_utilization = Column(Integer, nullable=False)
+    follow_up_to_completion = Column(Integer, nullable=False)
+    task_delegation_and_ownership = Column(Integer, nullable=False)
+    encourage_team_development = Column(Integer, nullable=False)
+    realistic_expectation = Column(Integer, nullable=False)
+    performance_under_stress = Column(Integer, nullable=False)
     mgr_description = Column(String(4096), nullable=False)
     
 class Evaluation(Base):
@@ -76,14 +76,14 @@ class Evaluation(Base):
 
     evaler_id = Column(VARCHAR(10), ForeignKey(Student.user_name, onupdate="CASCADE", ondelete="CASCADE"), primary_key=True, autoincrement=False)
     evalee_id = Column(VARCHAR(10), ForeignKey(Student.user_name, onupdate="CASCADE", ondelete="CASCADE"), primary_key=True, autoincrement=False)
-    week = Column(Integer(2), primary_key=True, autoincrement=False)
-    rank = Column(Integer(3), nullable=False)
-    token = Column(Integer(3), nullable=False)
+    week = Column(Integer, primary_key=True, autoincrement=False)
+    rank = Column(Integer, nullable=False)
+    token = Column(Integer, nullable=False)
     description = Column(String(4096), nullable=False)
     submission_time = Column(TIMESTAMP, nullable=False, server_default=func.now(), onupdate=func.current_timestamp())
     adjective = Column(String(128), nullable=False)
-    manager_id =  Column(Integer(11), ForeignKey('manager_eval.manager_id', onupdate="CASCADE", ondelete="CASCADE"))
-    semester_id = Column(Integer(11), ForeignKey('semester.id', onupdate="CASCADE", ondelete="CASCADE"), primary_key=True)
+    manager_id =  Column(Integer, ForeignKey('manager_eval.manager_id', onupdate="CASCADE", ondelete="CASCADE"))
+    semester_id = Column(Integer, ForeignKey('semester.id', onupdate="CASCADE", ondelete="CASCADE"), primary_key=True)
     evaler = relationship(Student, foreign_keys='Evaluation.evaler_id')
     evalee = relationship(Student, foreign_keys='Evaluation.evalee_id')
     semester = relationship(Semester)
@@ -122,14 +122,14 @@ class EncryptedEvaluation(Base):
 
     evaler_id = Column(VARCHAR(10), ForeignKey(Student.user_name, onupdate="CASCADE", ondelete="CASCADE"), primary_key=True, autoincrement=False)
     evalee_id = Column(VARCHAR(10), ForeignKey(Student.user_name, onupdate="CASCADE", ondelete="CASCADE"), primary_key=True, autoincrement=False)
-    week = Column(Integer(2), primary_key=True, autoincrement=False)
+    week = Column(Integer, primary_key=True, autoincrement=False)
     rank = Column(String(128), nullable=False)
     token = Column(String(128), nullable=False)
     description = Column(String(4096), nullable=False)
     submission_time = Column(TIMESTAMP, nullable=False, server_default=func.now(), onupdate=func.current_timestamp())
     adj = Column(String(128), nullable=False)
-    manager_id =  Column(Integer(11), ForeignKey('manager_eval.manager_id', onupdate="CASCADE", ondelete="CASCADE"))
-    semester_id = Column(Integer(11), ForeignKey('semester.id', onupdate="CASCADE", ondelete="CASCADE"), primary_key=True)
+    manager_id =  Column(Integer, ForeignKey('manager_eval.manager_id', onupdate="CASCADE", ondelete="CASCADE"))
+    semester_id = Column(Integer, ForeignKey('semester.id', onupdate="CASCADE", ondelete="CASCADE"), primary_key=True)
     evaler = relationship(Student, foreign_keys='EncryptedEvaluation.evaler_id')
     evalee = relationship(Student, foreign_keys='EncryptedEvaluation.evalee_id')
     semester = relationship(Semester)
@@ -167,7 +167,7 @@ class EncryptedEvaluation(Base):
 class Enrollment(Base):
     __tablename__ = 'enrollment'
     student_id = Column(VARCHAR(10), ForeignKey('student.user_name', onupdate="CASCADE", ondelete="CASCADE"), primary_key=True)
-    semester_id = Column(Integer(11), ForeignKey('semester.id', onupdate="CASCADE", ondelete="CASCADE"), primary_key=True)
+    semester_id = Column(Integer, ForeignKey('semester.id', onupdate="CASCADE", ondelete="CASCADE"), primary_key=True)
     student = relationship(Student)
     semester = relationship(Semester)
     
@@ -181,9 +181,9 @@ class Enrollment(Base):
 
 class Groups(Base):
     __tablename__ = 'groups'
-    semester_id = Column(Integer(11), ForeignKey('semester.id', onupdate="CASCADE", ondelete="CASCADE"))
-    week = Column(Integer(11), nullable=False)
-    id = Column(Integer(11), primary_key=True, autoincrement=True)
+    semester_id = Column(Integer, ForeignKey('semester.id', onupdate="CASCADE", ondelete="CASCADE"))
+    week = Column(Integer, nullable=False)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     name =  Column(VARCHAR(50))
     assignment_name = Column(VARCHAR(50))
     semester = relationship(Semester)
@@ -200,9 +200,9 @@ class Groups(Base):
     
 class Group_Student(Base):
     __tablename__ = 'group_student'
-    group_id = Column(Integer(11), ForeignKey('groups.id', onupdate="CASCADE", ondelete="CASCADE"), primary_key=True)
+    group_id = Column(Integer, ForeignKey('groups.id', onupdate="CASCADE", ondelete="CASCADE"), primary_key=True)
     student_id = Column(VARCHAR(10), ForeignKey('student.user_name', onupdate="CASCADE", ondelete="CASCADE"), primary_key=True)
-    is_manager = Column(Integer(1), nullable=False)
+    is_manager = Column(Integer, nullable=False)
     student = relationship(Student)
     groups = relationship(Groups)
     @property
