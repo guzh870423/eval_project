@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Evaluation Detail</title>  
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}">
+  <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel='stylesheet' type='text/css'>
+  <script src='//cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js' type='text/javascript'></script>
+  <script src='//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.0.0/js/bootstrap.min.js' type='text/javascript'></script>
+  <script src='//cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/1.8/js/bootstrap-switch.min.js' type='text/javascript'></script>
+  <script src='http://davidstutz.github.io/bootstrap-multiselect/js/bootstrap-multiselect.js' type='text/javascript'></script>
+</head>
+<body>
+	<div class="form-header">Evaluation for week {{form_evals[0].WEEK}}</div>
+	{% for item in form_evals %}
+	<div class='container'>
+    <div class='panel panel-primary dialog-panel'>
+      <div class='panel-heading'>
+        <h4>{{ item.first_name}} {{item.last_name }}</h4>
+      </div>
+      <div class='panel-body'>
+        <form class='form-horizontal' role='form'>
+		  <div class='form-group'>
+            <label class='control-label col-md-2 col-md-offset-2' for='id_adults'>Rank</label>
+            <div class='col-md-8'>
+              <div class='col-md-3'>
+                <div class='form-group internal'>
+                  <input class='form-control col-md-8' id='rank' placeholder='Rank' type='number'>
+                </div>
+              </div>              
+            </div>
+			</div>
+			<div class='form-group'>
+			<label class='control-label col-md-2 col-md-offset-2' for='id_adults'>Tokens</label>
+            <div class='col-md-8'>
+              <div class='col-md-3'>
+                <div class='form-group internal'>
+                  <input class='form-control col-md-8' id='tokens' placeholder='Tokens' type='number'>
+                </div>
+              </div>              
+            </div>
+			</div>
+			<div class='form-group'>
+			<label class='control-label col-md-2 col-md-offset-2' for='id_adults'>Adjective</label>
+            <div class='col-md-8'>             
+                <div class='col-md-3'>
+				  <div class='form-group internal'>
+					<input class='form-control' id='adjective' placeholder='Adjective' type='text'>
+				  </div>
+                </div>
+            </div>
+          </div>
+          <div class='form-group'>
+            <label class='control-label col-md-2 col-md-offset-2' for='id_comments'>Comments</label>
+            <div class='col-md-6'>
+              <textarea class='form-control' id='id_comments' placeholder='Additional comments' rows='3'></textarea>
+            </div>
+          </div>          
+        </form>
+      </div>	  
+    </div>	 
+  </div>
+  {% endfor %}
+  <div>
+	<div class='center-button'>
+	  <button class='btn-lg btn-primary' type='submit'>Submit Evaluation</button>
+	</div>	
+  </div>
+ 
+</body>
+</html>

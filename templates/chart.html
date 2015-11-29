@@ -1,0 +1,31 @@
+<html>
+<head>
+        <meta charset="utf-8" />
+        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+     </head>
+<body>
+
+<form type="post">
+
+	<table border="1 px solid black">
+        <caption>Sample Chart
+        </caption>
+        <tr>
+            <th>week</th>
+            <th>rank</th>
+        </tr>
+        {% for studEval in averagedEval %}
+        <tr>
+			<td>{{studEval.week}}</td>
+			<td>{{studEval.avg}}</td>
+		</tr>
+        {% endfor %}
+    </table> 
+	
+	
+	{% include 'ranks.html' %}
+	
+</form>
+</body>
+
+</html>
