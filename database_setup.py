@@ -20,6 +20,7 @@ class Student(Base):
     first_name = Column(VARCHAR(50))
     last_name = Column(VARCHAR(50))
     email = Column(VARCHAR(50))
+    login_key = Column(VARCHAR(50))
     create_time = Column(TIMESTAMP, nullable=False, server_default=func.now())
     alias_name = Column(VARCHAR(11))
     @property
@@ -31,6 +32,7 @@ class Student(Base):
             'user_name': self.user_name,
             'email': self.email,
             'alias_name': self.alias_name,
+			'login_key': self.login_key
         }
         
 class Semester(Base):  
@@ -79,9 +81,9 @@ class Evaluation(Base):
     token = Column(Integer(3), nullable=False)
     description = Column(String(4096), nullable=False)
     submission_time = Column(TIMESTAMP, nullable=False, server_default=func.now(), onupdate=func.current_timestamp())
-    adj = Column(String(128), nullable=False)
+    adjective = Column(String(128), nullable=False)
     manager_id =  Column(Integer(11), ForeignKey('manager_eval.manager_id', onupdate="CASCADE", ondelete="CASCADE"))
-    semester_id = id = Column(Integer(11), ForeignKey('semester.id', onupdate="CASCADE", ondelete="CASCADE"), primary_key=True)
+    semester_id = Column(Integer(11), ForeignKey('semester.id', onupdate="CASCADE", ondelete="CASCADE"), primary_key=True)
     evaler = relationship(Student, foreign_keys='Evaluation.evaler_id')
     evalee = relationship(Student, foreign_keys='Evaluation.evalee_id')
     semester = relationship(Semester)
@@ -107,7 +109,7 @@ class Evaluation(Base):
         """Return object data in easily serializeable format"""
         return {
             'evaler_id': self.evaler_id,
-            #'evalee_id': self.evalee_id,
+            'evalee_id': self.evalee_id,
             'week': self.week,
             'rank': self.rank,
             'token': self.token,
@@ -127,7 +129,7 @@ class EncryptedEvaluation(Base):
     submission_time = Column(TIMESTAMP, nullable=False, server_default=func.now(), onupdate=func.current_timestamp())
     adj = Column(String(128), nullable=False)
     manager_id =  Column(Integer(11), ForeignKey('manager_eval.manager_id', onupdate="CASCADE", ondelete="CASCADE"))
-    semester_id = id = Column(Integer(11), ForeignKey('semester.id', onupdate="CASCADE", ondelete="CASCADE"), primary_key=True)
+    semester_id = Column(Integer(11), ForeignKey('semester.id', onupdate="CASCADE", ondelete="CASCADE"), primary_key=True)
     evaler = relationship(Student, foreign_keys='EncryptedEvaluation.evaler_id')
     evalee = relationship(Student, foreign_keys='EncryptedEvaluation.evalee_id')
     semester = relationship(Semester)
@@ -153,7 +155,7 @@ class EncryptedEvaluation(Base):
         """Return object data in easily serializeable format"""
         return {
             'evaler_id': self.evaler_id,
-            #'evalee_id': self.evalee_id,
+            'evalee_id': self.evalee_id,
             'week': self.week,
             'rank': self.rank,
             'token': self.token,
@@ -207,7 +209,7 @@ class Group_Student(Base):
     def serialize(self):
         """Return object data in easily serializeable format"""
         return {
-            'user_name': self.user_name,
+            'student_id': self.student_id,
             'group_id': self.group_id,
         }
         
