@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from database_setup import Student, Base, Group, Semester, Group_Student, Enrollment, Evaluation, EncryptedEvaluation
+from database_setup import Student, Base, Groups, Semester, Group_Student, Enrollment, Evaluation, EncryptedEvaluation
 from ConfigParser import SafeConfigParser
 from encrypt import EvalCipher
 
@@ -36,7 +36,7 @@ session.add(student3)
 session.commit()
 
 #semester
-semester1 = Semester(year=2015, season="Fall")
+semester1 = Semester(year=2015, season="Fall", course_no="P532")
 session.add(semester1)
 session.commit()
 
@@ -86,21 +86,21 @@ session.add(enrollment3)
 session.commit()
 
 #group
-group1 = Group(semester=semester1, week=1)
-group2 = Group(semester=semester1, week=2)
-group3 = Group(semester=semester1, week=3)
+group1 = Groups(semester=semester1, week=1)
+group2 = Groups(semester=semester1, week=2)
+group3 = Groups(semester=semester1, week=3)
 session.add(group1)
 session.add(group2)
 session.add(group3)
 session.commit()
 
 #group_student
-group_student1 = Group_Student(group=group1, student=student1)
-group_student2 = Group_Student(group=group1, student=student2)
-group_student3 = Group_Student(group=group2, student=student2)
-group_student4 = Group_Student(group=group2, student=student3)
-group_student5 = Group_Student(group=group3, student=student1)
-group_student6 = Group_Student(group=group3, student=student3)
+group_student1 = Group_Student(groups=group1, student=student1, is_manager=0)
+group_student2 = Group_Student(groups=group1, student=student2, is_manager=0)
+group_student3 = Group_Student(groups=group2, student=student2, is_manager=0)
+group_student4 = Group_Student(groups=group2, student=student3, is_manager=0)
+group_student5 = Group_Student(groups=group3, student=student1, is_manager=0)
+group_student6 = Group_Student(groups=group3, student=student3, is_manager=0)
 session.add(group_student1)
 session.add(group_student2)
 session.add(group_student3)

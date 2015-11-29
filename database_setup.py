@@ -16,12 +16,12 @@ Base = declarative_base()
 
 class Student(Base):
     __tablename__ = 'student'
-    user_name = Column(VARCHAR(10), primary_key=True)
+    user_name = Column(VARCHAR(15), primary_key=True)
     first_name = Column(VARCHAR(50))
     last_name = Column(VARCHAR(50))
     email = Column(VARCHAR(50))
     create_time = Column(TIMESTAMP, nullable=False, server_default=func.now())
-    
+    alias_name = Column(VARCHAR(11))
     @property
     def serialize(self):
         """Return object data in easily serializeable format"""
@@ -30,6 +30,7 @@ class Student(Base):
             'last_name': self.last_name,
             'user_name': self.user_name,
             'email': self.email,
+            'alias_name': self.alias_name,
         }
         
 class Semester(Base):  
@@ -37,20 +38,37 @@ class Semester(Base):
     __table_args__ = (
             UniqueConstraint('year', 'season'),
             )
-    id = Column(Integer(11), primary_key=True, autoincrement=True)
     year = Column(Integer(4), nullable=False)
     season = Column(VARCHAR(11), nullable=False)
     create_time = Column(TIMESTAMP, nullable=False, server_default=func.now())
+    id = Column(Integer(11), primary_key=True, autoincrement=True)
+    course_no = Column(VARCHAR(11), nullable=False)
     
     @property
     def serialize(self):
         """Return object data in easily serializeable format"""
         return {
-            'id': self.id,
             'year': self.year,
             'season': self.season,
+            'id': self.id,
+            'course_no': self.course_no,
         }
-        
+
+class Manager_Eval(Base):
+    __tablename__ = 'manager_eval'
+    manager_id = Column(Integer(11), primary_key=True, autoincrement=True)
+    approachable_attitude = Column(Integer(2), nullable=False)
+    team_communication = Column(Integer(2), nullable=False)
+    client_interaction = Column(Integer(2), nullable=False)
+    decision_making = Column(Integer(2), nullable=False)
+    resource_utilization = Column(Integer(2), nullable=False)
+    follow_up_to_completion = Column(Integer(2), nullable=False)
+    task_delegation_and_ownership = Column(Integer(2), nullable=False)
+    encourage_team_development = Column(Integer(2), nullable=False)
+    realistic_expectation = Column(Integer(2), nullable=False)
+    performance_under_stress = Column(Integer(2), nullable=False)
+    mgr_description = Column(String(4096), nullable=False)
+    
 class Evaluation(Base):
     __tablename__ = 'evaluation'
 
@@ -62,11 +80,12 @@ class Evaluation(Base):
     description = Column(String(4096), nullable=False)
     submission_time = Column(TIMESTAMP, nullable=False, server_default=func.now(), onupdate=func.current_timestamp())
     adj = Column(String(128), nullable=False)
+    manager_id =  Column(Integer(11), ForeignKey('manager_eval.manager_id', onupdate="CASCADE", ondelete="CASCADE"))
     semester_id = id = Column(Integer(11), ForeignKey('semester.id', onupdate="CASCADE", ondelete="CASCADE"), primary_key=True)
-    #manager_id =  Column(Integer(2), ForeignKey(Manager_Eval.id, , onupdate="CASCADE", ondelete="CASCADE"))
     evaler = relationship(Student, foreign_keys='Evaluation.evaler_id')
     evalee = relationship(Student, foreign_keys='Evaluation.evalee_id')
     semester = relationship(Semester)
+    manager_eval = relationship(Manager_Eval)
     
     def parse(self, encryptedEval):
         self.evaler_id = encryptedEval.evaler_id
@@ -77,6 +96,7 @@ class Evaluation(Base):
         #self.description = encryptedEval.description
         self.submission_time = encryptedEval.submission_time
         #self.adj = encryptedEval.adj
+        self.manager_id = encryptedEval.manager_id
         self.semester_id = encryptedEval.semester_id
         self.evaler = encryptedEval.evaler
         self.evalee = encryptedEval.evalee
@@ -93,7 +113,6 @@ class Evaluation(Base):
             'token': self.token,
             'description': self.description,
             'adj': self.adj,
-            'type': self.type,
         }
         
 class EncryptedEvaluation(Base):
@@ -107,11 +126,12 @@ class EncryptedEvaluation(Base):
     description = Column(String(4096), nullable=False)
     submission_time = Column(TIMESTAMP, nullable=False, server_default=func.now(), onupdate=func.current_timestamp())
     adj = Column(String(128), nullable=False)
+    manager_id =  Column(Integer(11), ForeignKey('manager_eval.manager_id', onupdate="CASCADE", ondelete="CASCADE"))
     semester_id = id = Column(Integer(11), ForeignKey('semester.id', onupdate="CASCADE", ondelete="CASCADE"), primary_key=True)
-    #manager_id =  Column(Integer(2), ForeignKey(Manager_Eval.id, , onupdate="CASCADE", ondelete="CASCADE"))
     evaler = relationship(Student, foreign_keys='EncryptedEvaluation.evaler_id')
     evalee = relationship(Student, foreign_keys='EncryptedEvaluation.evalee_id')
     semester = relationship(Semester)
+    manager_eval = relationship(Manager_Eval)
     
     def parse(self, rawEval):
         self.evaler_id = rawEval.evaler_id
@@ -122,6 +142,7 @@ class EncryptedEvaluation(Base):
         #self.description = rawEval.description
         self.submission_time = rawEval.submission_time
         #self.adj = rawEval.adj
+        self.manager_id = rawEval.manager_id
         self.semester_id = rawEval.semester_id
         self.evaler = rawEval.evaler
         self.evalee = rawEval.evalee
@@ -138,14 +159,13 @@ class EncryptedEvaluation(Base):
             'token': self.token,
             'description': self.description,
             'adj': self.adj,
-            'type': self.type,
         }
         
     
 class Enrollment(Base):
     __tablename__ = 'enrollment'
-    user_name = Column(VARCHAR(10), ForeignKey('student.user_name', onupdate="CASCADE", ondelete="CASCADE"), primary_key=True)
-    semester_id = id = Column(Integer(11), ForeignKey('semester.id', onupdate="CASCADE", ondelete="CASCADE"), primary_key=True)
+    student_id = Column(VARCHAR(10), ForeignKey('student.user_name', onupdate="CASCADE", ondelete="CASCADE"), primary_key=True)
+    semester_id = Column(Integer(11), ForeignKey('semester.id', onupdate="CASCADE", ondelete="CASCADE"), primary_key=True)
     student = relationship(Student)
     semester = relationship(Semester)
     
@@ -153,17 +173,19 @@ class Enrollment(Base):
     def serialize(self):
         """Return object data in easily serializeable format"""
         return {
-            'user_name': self.user_name,
+            'student_id': self.student_id,
             'semester_id': self.semester_id,
         }
 
-class Group(Base):
-    __tablename__ = 'group'
-    id = Column(Integer(11), primary_key=True, autoincrement=True)
-    week = Column(Integer(2), nullable=False)
+class Groups(Base):
+    __tablename__ = 'groups'
     semester_id = Column(Integer(11), ForeignKey('semester.id', onupdate="CASCADE", ondelete="CASCADE"))
+    week = Column(Integer(11), nullable=False)
+    id = Column(Integer(11), primary_key=True, autoincrement=True)
     name =  Column(VARCHAR(50))
+    assignment_name = Column(VARCHAR(50))
     semester = relationship(Semester)
+    create_time = Column(TIMESTAMP, nullable=False, server_default=func.now())
     @property
     def serialize(self):
         """Return object data in easily serializeable format"""
@@ -176,10 +198,11 @@ class Group(Base):
     
 class Group_Student(Base):
     __tablename__ = 'group_student'
-    group_id = Column(Integer(11), ForeignKey('group.id', onupdate="CASCADE", ondelete="CASCADE"), primary_key=True)
-    user_name = Column(VARCHAR(10), ForeignKey('student.user_name', onupdate="CASCADE", ondelete="CASCADE"), primary_key=True)
+    group_id = Column(Integer(11), ForeignKey('groups.id', onupdate="CASCADE", ondelete="CASCADE"), primary_key=True)
+    student_id = Column(VARCHAR(10), ForeignKey('student.user_name', onupdate="CASCADE", ondelete="CASCADE"), primary_key=True)
+    is_manager = Column(Integer(1), nullable=False)
     student = relationship(Student)
-    group = relationship(Group)
+    groups = relationship(Groups)
     @property
     def serialize(self):
         """Return object data in easily serializeable format"""
@@ -187,6 +210,8 @@ class Group_Student(Base):
             'user_name': self.user_name,
             'group_id': self.group_id,
         }
+        
+    
 if __name__ == '__main__':    
     engine = create_engine('mysql://' + username + ':' + password + '@localhost:3306/eval') 
 

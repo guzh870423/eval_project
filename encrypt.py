@@ -4,7 +4,7 @@
 from Crypto.Cipher import AES
 from Crypto import Random
 from binascii import b2a_hex, a2b_hex
-from database_setup import Student, Base, Group, Semester, Group_Student, Enrollment, Evaluation, EncryptedEvaluation
+from database_setup import Student, Base, Groups, Semester, Group_Student, Enrollment, Evaluation, EncryptedEvaluation
  
 class EvalCipher():
     #iv = Random.new().read(AES.block_size)

@@ -1,7 +1,7 @@
 from flask import Flask, render_template, url_for, request, redirect
 from sqlalchemy import create_engine, distinct
 from sqlalchemy.orm import sessionmaker
-from database_setup import Student, Base, Group, Semester, Group_Student, Enrollment, Evaluation, EncryptedEvaluation
+from database_setup import Student, Base, Groups, Semester, Group_Student, Enrollment, Evaluation, EncryptedEvaluation
 from ConfigParser import SafeConfigParser
 from encrypt import EvalCipher
 
@@ -35,7 +35,7 @@ def main():
     else:
         semesters = session.query(Semester).all()
   
-        weeks = session.query(distinct(Group.week)).all()
+        weeks = session.query(distinct(Groups.week)).all()
         return render_template('main.html', semesters=semesters, weeks=weeks, str=str)
         
 @app.route('/reports/<int:semester_id>/<int:currentWeek>', methods=['GET', 'POST'])
@@ -60,7 +60,7 @@ def reports(semester_id, currentWeek):
     
     enrollments = session.query(Enrollment).filter_by(semester_id=semester_id).all()
     for enrollment in enrollments:
-        student = enrollment.user_name
+        student = enrollment.student_id
         students.append(enrollment.student)
      
     # which weeks do two students work together, connection[student1][student2] = [week1, week2]
@@ -114,13 +114,13 @@ def queryConnection(students):
             connection[student1.user_name][student2.user_name] = []
     
     #assign connection
-    groups = session.query(Group).all()
+    groups = session.query(Groups).all()
     for group in groups:
         studentsInGroup = session.query(Group_Student).filter_by(group_id=group.id).all()
         for student1 in studentsInGroup:
             for student2 in studentsInGroup:
                 if student1 != student2:
-                    connection[student1.user_name][student2.user_name].append(int(group.week))        
+                    connection[student1.student_id][student2.student_id].append(int(group.week))        
     return connection
                         
 # query evaluation for one week        
