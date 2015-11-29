@@ -4,6 +4,11 @@ from sqlalchemy.orm import sessionmaker
 from database_setup import Student, Base, Groups, Semester, Group_Student, Enrollment, Evaluation, EncryptedEvaluation
 from ConfigParser import SafeConfigParser
 from encrypt import EvalCipher
+from highcharts import Highchart
+from itertools import groupby
+from sqlalchemy import func, and_
+from sqlalchemy.orm import aliased
+from sqlalchemy.sql import exists
 
 parser = SafeConfigParser()
 parser.read('config.ini')
@@ -37,7 +42,71 @@ def main():
   
         weeks = session.query(distinct(Groups.week)).all()
         return render_template('main.html', semesters=semesters, weeks=weeks, str=str)
-        
+@app.route('/chart', methods=['GET'])
+def chart():
+    # A chart is the container that your data will be rendered in, it can (obviously) support multiple data series within it.
+    options = {
+    'title': {
+        'text': 'Normalized Rank Chart'
+    },
+    'subtitle': {
+        'text': 'For student'
+    },
+    'xAxis': {
+        'reversed': False,
+        'title': {
+            'enabled': True,
+            'text': 'Rank'
+        },
+        'labels': {
+            'formatter': 'function () {\
+                return this.value;\
+            }'
+        },
+        'maxPadding': 0.05,
+        'showLastLabel': True
+    },
+    'yAxis': {
+        'title': {
+            'text': 'Week'
+        },
+        'labels': {
+            'formatter': "function () {\
+                return this.value;\
+            }"
+        },
+        'lineWidth': 2
+    },
+    'legend': {
+        'enabled': False
+    },
+    'tooltip': {
+        'headerFormat': '<b>{series.name}</b><br/>',
+        'pointFormat': 'Rank {point.x}: Week {point.y}'
+    }
+}
+    chart = Highchart()
+    chart.set_options('chart', {'inverted': True})
+    chart.set_dict_options(options)    
+    data = []
+    averagedEval = session.query(Evaluation.evalee_id, Evaluation.week, func.avg(Evaluation.rank).label("avg")).filter_by(evalee_id='guzh').group_by(Evaluation.evalee_id, Evaluation.week).all()
+          
+    for eval in averagedEval:
+       evalee = eval.evalee_id
+       rank = round(eval.avg)
+       week = eval.week
+       
+       points = [rank, week]
+       data.append(points)    
+       chart.add_data_set(data, 'spline', 'Normalized Rank', marker={'enabled': True}) 
+
+    chart.save_file('templates/ranks')
+    
+    Evaluations = session.query(Evaluation).all()
+    return render_template('chart.html',
+        evals=Evaluations,
+        averagedEval=averagedEval
+      ) 
 @app.route('/reports/<int:semester_id>/<int:currentWeek>', methods=['GET', 'POST'])
 def reports(semester_id, currentWeek):
     semester = session.query(Semester).filter_by(id=semester_id).one()
@@ -179,7 +248,40 @@ def queryEval(semester_id, week, students, connection):
             averageRankOneWeek[evalee] += rank / len(reversedEvalsOneWeek[evalee])
             averageTokenOneWeek[evalee] += token / len(reversedEvalsOneWeek[evalee])
     return evalsOneWeek, reversedEvalsOneWeek, sortedEvalerOneWeek, averageRankOneWeek, averageTokenOneWeek
-        
+@app.route('/eval')
+def list_all():
+   max_week = session.query(func.max(Groups.week).label('maxweek'))
+   
+   evaler = aliased(Group_Student)
+   evalee = aliased(Group_Student)
+
+   sub_groups = session.query(Groups.week, Groups.id.label('GROUP_ID'), Group_Student.student_id).filter(Groups.id==Group_Student.group_id, Groups.week==max_week).subquery()
+
+   sub_student_evals = session.query(Groups.week, Groups.id, evaler.student_id.label('EVALER_ID'), evalee.student_id.label('EVALEE_ID')).filter(Groups.id==evaler.group_id, evaler.group_id==evalee.group_id, evaler.student_id<>evalee.student_id, evaler.student_id==request.args['username']).order_by(Groups.week, evaler.student_id, evalee.student_id).subquery()
+
+   current_evals = session.query(sub_groups.c.week.label('WEEK'), sub_student_evals.c.EVALER_ID, sub_student_evals.c.EVALEE_ID).filter(sub_groups.c.week >= sub_student_evals.c.week, sub_groups.c.student_id == sub_student_evals.c.EVALER_ID).group_by(sub_groups.c.week.label('WEEK'), sub_student_evals.c.EVALER_ID, sub_student_evals.c.EVALEE_ID).order_by(sub_groups.c.week, sub_student_evals.c.EVALER_ID).subquery()
+   
+   form_evals = session.query(current_evals.c.WEEK, current_evals.c.EVALEE_ID, Student.first_name, Student.last_name).join(Student, current_evals.c.EVALEE_ID==Student.user_name).order_by(current_evals.c.EVALEE_ID)
+
+   return render_template(
+       'eval.html',
+       username = request.args['username'],
+       form_evals=form_evals)
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    error = None
+    if request.method == 'POST':
+        username = request.form['username']
+        pwd = request.form['password']
+        users = session.query(Student).all()
+        isAuthentic = session.query(exists().where(and_(Student.user_name==username, Student.login_key==pwd))).scalar()
+
+        if isAuthentic != 1:
+            error = 'Invalid Credentials. Please try again.'
+        else:
+            return redirect(url_for('list_all', username=username))
+    return render_template('index.html', error=error)
 if __name__ == '__main__':
     app.debug = True
     app.run(host='0.0.0.0', port=5000)
