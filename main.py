@@ -114,8 +114,7 @@ def chart():
 @app.route('/reports/<int:semester_id>/<int:currentWeek>', methods=['GET', 'POST'])
 def reports(semester_id, currentWeek):
     semester = session.query(Semester).filter_by(id=semester_id).one()
-    # list of students
-    students = []
+
     # Evaluation dictionary: evals[currentWeek][evaler][evalee] = evaluation
     evals = []
     # normalized ranks dictionary: reversedEvals[Week][evalee][evaler][0] = evaluation
@@ -131,21 +130,14 @@ def reports(semester_id, currentWeek):
     # weighted rank
     weightedRank = {}
     
-    enrollments = session.query(Enrollment).filter_by(semester_id=semester_id).all()
-    for enrollment in enrollments:
-        student = enrollment.student_id
-        students.append(enrollment.student)
+    # list of students
+    students = queryStudents(semester_id)
      
     # which weeks do two students work together, connection[student1][student2] = [week1, week2]
     connection = queryConnection(students)
     
-    for week in range(1, currentWeek+1):
-        evalsOneWeek, reversedEvalsOneWeek, sortedEvalerOneWeek, averageRankOneWeek, averageTokenOneWeek = queryEval(semester_id, week, students, connection)
-        evals.append(evalsOneWeek)
-        reversedEvals.append(reversedEvalsOneWeek)
-        sortedEvaler.append(sortedEvalerOneWeek)
-        averageRank.append(averageRankOneWeek)
-        averageToken.append(averageTokenOneWeek)
+    evals, reversedEvals, sortedEvaler, averageRank, averageToken = queryEvals(currentWeek, semester_id, students, connection)
+
     #sortedByAverageRank = sorted(averageRank, key=averageRank.get)
     #print sortedByAverageRank
 
@@ -177,6 +169,14 @@ def reports(semester_id, currentWeek):
         weightedRank=weightedRank,
         )
 
+# get list of students for specified semester
+def queryStudents(semester_id):
+    students = []
+    enrollments = session.query(Enrollment).filter_by(semester_id=semester_id).all()
+    for enrollment in enrollments:
+        student = enrollment.student_id
+        students.append(enrollment.student)
+    return students
 # get connection matrix for students
 def queryConnection(students):
     connection = {}
@@ -196,8 +196,8 @@ def queryConnection(students):
                     connection[student1.student_id][student2.student_id].append(int(group.week))        
     return connection
                         
-# query evaluation for one week        
-def queryEval(semester_id, week, students, connection):
+# query evaluation for each week        
+def queryEvalByWeek(semester_id, week, students, connection):
     # Evaluation dictionary: evalsOneWeek[evaler][evalee] = evaluation
     evalsOneWeek = {}
     # normalized ranks dictionary: reversedEvalsOneWeek[evalee][evaler][0] = evaluation
@@ -252,6 +252,21 @@ def queryEval(semester_id, week, students, connection):
             averageRankOneWeek[evalee] += rank / len(reversedEvalsOneWeek[evalee])
             averageTokenOneWeek[evalee] += token / len(reversedEvalsOneWeek[evalee])
     return evalsOneWeek, reversedEvalsOneWeek, sortedEvalerOneWeek, averageRankOneWeek, averageTokenOneWeek
+
+def queryEvals(currentWeek, semester_id, students, connection):
+    evals = []
+    reversedEvals = []
+    sortedEvaler = []
+    averageRank = []
+    averageToken = []
+    for week in range(1, currentWeek+1):
+        evalsOneWeek, reversedEvalsOneWeek, sortedEvalerOneWeek, averageRankOneWeek, averageTokenOneWeek = queryEvalByWeek(semester_id, week, students, connection)
+        evals.append(evalsOneWeek)
+        reversedEvals.append(reversedEvalsOneWeek)
+        sortedEvaler.append(sortedEvalerOneWeek)
+        averageRank.append(averageRankOneWeek)
+        averageToken.append(averageTokenOneWeek)
+    return evals, reversedEvals, sortedEvaler, averageRank, averageToken
 @app.route('/eval')
 def list_all():
    max_week = session.query(func.max(Groups.week).label('maxweek'))
