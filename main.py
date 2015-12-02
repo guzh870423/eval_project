@@ -50,13 +50,10 @@ def main():
 def chart():
     # A chart is the container that your data will be rendered in, it can (obviously) support multiple data series within it.
     options = {
-    'title': {
+        'title': {
         'text': 'Normalized Rank Chart'
-    },
-    'subtitle': {
-        'text': 'For student'
-    },
-    'xAxis': {
+        },
+        'xAxis': {
         'reversed': False,
         'title': {
             'enabled': True,
@@ -69,8 +66,8 @@ def chart():
         },
         'maxPadding': 0.05,
         'showLastLabel': True
-    },
-    'yAxis': {
+        },
+        'yAxis': {
         'title': {
             'text': 'Week'
         },
@@ -80,25 +77,28 @@ def chart():
             }"
         },
         'lineWidth': 2
-    },
-    'legend': {
+        },
+        'legend': {
         'enabled': False
-    },
-    'tooltip': {
+        },
+        'tooltip': {
         'headerFormat': '<b>{series.name}</b><br/>',
         'pointFormat': 'Rank {point.x}: Week {point.y}'
+        }
     }
-}
     chart = Highchart()
     chart.set_options('chart', {'inverted': True})
     chart.set_dict_options(options)    
     data = []
-    averagedEval = session.query(Evaluation.evalee_id, Evaluation.week, func.avg(Evaluation.rank).label("avg")).filter_by(evalee_id='guzh').group_by(Evaluation.evalee_id, Evaluation.week).all()
-          
-    for eval in averagedEval:
-       evalee = eval.evalee_id
-       rank = round(eval.avg)
-       week = eval.week
+    
+    #averagedEval = session.query(Evaluation.evalee_id, Evaluation.week, func.avg(Evaluation.rank).label("avg")).filter_by(evalee_id='guzh').group_by(Evaluation.evalee_id, Evaluation.week).all()
+    students = queryStudents(1)
+    connection = queryConnection(students)
+    evals, reversedEvals, sortedEvaler, averageRank, averageToken = queryEvals(3, 1, students, connection)      
+    
+    for week in range(1, 3):
+       evalee = 'adam'
+       rank = averageRank[week]['adam']
        
        points = [rank, week]
        data.append(points)    
@@ -106,10 +106,10 @@ def chart():
 
     chart.save_file('templates/ranks')
     
-    Evaluations = session.query(Evaluation).all()
+    #Evaluations = session.query(Evaluation).all()
     return render_template('chart.html',
-        evals=Evaluations,
-        averagedEval=averagedEval
+        evals=evals,
+        averageRank=averageRank
       ) 
 @app.route('/reports/<int:semester_id>/<int:currentWeek>', methods=['GET', 'POST'])
 def reports(semester_id, currentWeek):
@@ -155,6 +155,10 @@ def reports(semester_id, currentWeek):
                 weightsSum += weightsForAverageRank[week-1]
         weightedRank[evalee] = round(weightedRank[evalee] / weightsSum, 3)
 
+    print averageRank
+    # generate performance trend chart for each student 
+    generateCharts(currentWeek, semester_id, students, connection, averageRank)
+    
     return render_template('reports.html',
         semesterName=str(semester.year)+semester.season,
         currentWeek=currentWeek,
@@ -267,6 +271,61 @@ def queryEvals(currentWeek, semester_id, students, connection):
         averageRank.append(averageRankOneWeek)
         averageToken.append(averageTokenOneWeek)
     return evals, reversedEvals, sortedEvaler, averageRank, averageToken
+
+def generateCharts(currentWeek, semester_id, students, connection, averageRank):
+    options = {
+        'title': {
+        'text': 'Normalized Rank Chart'
+        },
+        'xAxis': {
+        'reversed': True,
+        'title': {
+            'enabled': True,
+            'text': 'Normalized Rank'
+        },
+        'labels': {
+            'formatter': 'function () {\
+                return this.value;\
+            }'
+        },
+        'maxPadding': 0.05,
+        'showLastLabel': True
+        },
+        'yAxis': {
+        'title': {
+            'text': 'Week'
+        },
+        'labels': {
+            'formatter': "function () {\
+                return this.value;\
+            }"
+        },
+        'lineWidth': 2
+        },
+        'legend': {
+        'enabled': False
+        },
+        'tooltip': {
+        'headerFormat': '<b>{series.name}</b><br/>',
+        'pointFormat': 'Rank {point.x}: Week {point.y}'
+        }
+    }
+
+    for student in students:
+        chart = Highchart()
+        chart.set_options('chart', {'inverted': True})
+        options['title']['text'] = student.user_name
+        options['chart'] = {'renderTo': 'container_' + student.user_name}
+        chart.set_dict_options(options)    
+        data = []
+        for week in range(1, currentWeek + 1):
+            rank = averageRank[week-1].get(student.user_name)
+            if rank is not None:
+                points = [rank, week]
+                data.append(points)    
+                chart.add_data_set(data, 'spline', 'Normalized Rank', marker={'enabled': True})
+        chart.save_file('templates/charts/' + student.user_name)
+
 @app.route('/eval')
 def list_all():
    max_week = session.query(func.max(Groups.week).label('maxweek'))

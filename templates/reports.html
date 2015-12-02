@@ -48,6 +48,9 @@
                 </tr>
             {% endfor %}
         </table>
+
+        {% include 'charts/' + student.user_name + '.html' %}
     {% endfor %}
+
   </body>
 </html>
