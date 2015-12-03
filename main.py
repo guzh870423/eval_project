@@ -150,7 +150,7 @@ def reports(semester_id, currentWeek):
     generateCharts(currentWeek, semester_id, students, connection, averageRank)
     
     return render_template('reports.html',
-        semesterName=str(semester.year)+semester.season,
+        semester=semester,
         currentWeek=currentWeek,
         students=students,
         names=names,

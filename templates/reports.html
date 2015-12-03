@@ -5,15 +5,16 @@
     </style>
   </head>
   <body>
-    <h2>Reports for semester {{semesterName}}, week {{currentWeek}}</h1>
+    <h2>Reports for semester {{semester.year}} {{ semester.season }} {{ semester.course_no }}, week {{currentWeek}}</h2>
     <p id="demo"></p>
 
     <script>
         document.getElementById("demo").innerHTML = Date();
     </script>
 
+    <h2>Average ranks </h2>
     <table border="1 px solid black">
-        <caption>Average ranks <br>
+        <caption>
             normalized rank =  rank / number of reviews given by evaler. Range: (0,1]<br>
             normalized token = token * number of reviews given by evaler.
         </caption>
