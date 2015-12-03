@@ -20,8 +20,8 @@ Base = declarative_base()
 class Student(Base):
     __tablename__ = 'student'
     user_name = Column(VARCHAR(15), primary_key=True)
-    first_name = Column(VARCHAR(50))
-    last_name = Column(VARCHAR(50))
+    first_name = Column(VARCHAR(50), nullable=False)
+    last_name = Column(VARCHAR(50), nullable=False)
     email = Column(VARCHAR(50))
     login_key = Column(VARCHAR(50))
     create_time = Column(TIMESTAMP, nullable=False, server_default=func.now())

@@ -10,6 +10,7 @@ from sqlalchemy import func, and_
 from sqlalchemy.orm import aliased
 from sqlalchemy.sql import exists
 
+round_digits = 3
 parser = SafeConfigParser()
 parser.read('config.ini')
 username = parser.get('login', 'username')
@@ -114,7 +115,13 @@ def chart():
 @app.route('/reports/<int:semester_id>/<int:currentWeek>', methods=['GET', 'POST'])
 def reports(semester_id, currentWeek):
     semester = session.query(Semester).filter_by(id=semester_id).one()
-
+    
+    # list of students
+    students = queryStudents(semester_id)
+     
+    # which weeks do two students work together, connection[student1][student2] = [week1, week2]
+    connection = queryConnection(students)
+    
     # Evaluation dictionary: evals[currentWeek][evaler][evalee] = evaluation
     evals = []
     # normalized ranks dictionary: reversedEvals[Week][evalee][evaler][0] = evaluation
@@ -127,33 +134,16 @@ def reports(semester_id, currentWeek):
     averageRank = []
     # average token: averageToken[week][student]
     averageToken = []
-    # weighted rank
-    weightedRank = {}
-    
-    # list of students
-    students = queryStudents(semester_id)
-     
-    # which weeks do two students work together, connection[student1][student2] = [week1, week2]
-    connection = queryConnection(students)
-    
     evals, reversedEvals, sortedEvaler, averageRank, averageToken = queryEvals(currentWeek, semester_id, students, connection)
 
     #sortedByAverageRank = sorted(averageRank, key=averageRank.get)
     #print sortedByAverageRank
 
-
+    # names is a map from "user_name" to "alias_name" (if exists) or "first_name last_name" 
+    names = mapNames(students)
                     
     # compute weighted average rank
-    for evalee in reversedEvals[currentWeek-1]:
-        weightedRank[evalee] = 0
-        weightsSum = 0
-        for evaler in reversedEvals[currentWeek-1][evalee]:
-            rank = reversedEvals[currentWeek-1][evalee][evaler][1]
-            weeks = connection[evalee][evaler]
-            for week in weeks:                
-                weightedRank[evalee] += rank * weightsForAverageRank[week-1]
-                weightsSum += weightsForAverageRank[week-1]
-        weightedRank[evalee] = round(weightedRank[evalee] / weightsSum, 3)
+    weightedRank = computeWeightedRanks(currentWeek, connection, reversedEvals, weightsForAverageRank)
 
     print averageRank
     # generate performance trend chart for each student 
@@ -163,6 +153,7 @@ def reports(semester_id, currentWeek):
         semesterName=str(semester.year)+semester.season,
         currentWeek=currentWeek,
         students=students,
+        names=names,
         connection=connection,
         evals=evals,
         reversedEvals=reversedEvals,
@@ -228,7 +219,7 @@ def queryEvalByWeek(semester_id, week, students, connection):
                 reversedEvalsOneWeek[evalee] = {}
             reversedEvalsOneWeek[evalee][evaler] = []
             reversedEvalsOneWeek[evalee][evaler].append(eval)
-            reversedEvalsOneWeek[evalee][evaler].append(round(float(eval.rank) / len(evalsOneWeek[evaler]), 3))
+            reversedEvalsOneWeek[evalee][evaler].append(round(float(eval.rank) / len(evalsOneWeek[evaler]), round_digits))
             reversedEvalsOneWeek[evalee][evaler].append(eval.token * len(evalsOneWeek[evaler]))
     
     #sort evaler for each evalee
@@ -255,6 +246,8 @@ def queryEvalByWeek(semester_id, week, students, connection):
             token = reversedEvalsOneWeek[evalee][evaler][2]
             averageRankOneWeek[evalee] += rank / len(reversedEvalsOneWeek[evalee])
             averageTokenOneWeek[evalee] += token / len(reversedEvalsOneWeek[evalee])
+        averageRankOneWeek[evalee] = round(averageRankOneWeek[evalee], round_digits)
+    
     return evalsOneWeek, reversedEvalsOneWeek, sortedEvalerOneWeek, averageRankOneWeek, averageTokenOneWeek
 
 def queryEvals(currentWeek, semester_id, students, connection):
@@ -326,6 +319,29 @@ def generateCharts(currentWeek, semester_id, students, connection, averageRank):
                 chart.add_data_set(data, 'spline', 'Normalized Rank', marker={'enabled': True})
         chart.save_file('templates/charts/' + student.user_name)
 
+def mapNames(students):
+    names = {}
+    for student in students:
+        if student.alias_name:
+            names[student.user_name] = student.alias_name
+        else:
+            names[student.user_name] = student.first_name + " " + student.last_name
+    return names
+            
+def computeWeightedRanks(currentWeek, connection, reversedEvals, weightsForAverageRank):
+    weightedRank = {}
+    for evalee in reversedEvals[currentWeek-1]:
+        weightedRank[evalee] = 0
+        weightsSum = 0
+        for evaler in reversedEvals[currentWeek-1][evalee]:
+            rank = reversedEvals[currentWeek-1][evalee][evaler][1]
+            weeks = connection[evalee][evaler]
+            for week in weeks:                
+                weightedRank[evalee] += rank * weightsForAverageRank[week-1]
+                weightsSum += weightsForAverageRank[week-1]
+        weightedRank[evalee] = round(weightedRank[evalee] / weightsSum, round_digits)
+    return weightedRank
+        
 @app.route('/eval')
 def list_all():
    max_week = session.query(func.max(Groups.week).label('maxweek'))

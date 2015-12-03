@@ -29,9 +29,9 @@ DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
 #pupulate students
-student1 = Student(user_name="adam")
-student2 = Student(user_name="bob")
-student3 = Student(user_name="charlie")
+student1 = Student(user_name="adam", first_name="Adam", last_name="Cole")
+student2 = Student(user_name="bob", first_name="Robert", last_name="Gates", alias_name="Bob")
+student3 = Student(user_name="charlie", first_name="Charlie", last_name="Chan")
 
 session.add(student1)
 session.add(student2)
@@ -44,7 +44,7 @@ session.add(semester1)
 session.commit()
 
 #evals
-eval1 = Evaluation(evaler=student1, evalee=student2, week=1, rank=1,token=4, description="i'd love to work", adjective="great", semester=semester1)
+eval1 = Evaluation(evaler=student1, evalee=student2, week=1, rank=1,token=4, description="i'd love to work with him.i'd love to work with him.i'd love to work with him.i'd love to work with him.i'd love to work with him. i'd love to work with him.i'd love to work with him.i'd love to work with him.i'd love to work with him.", adjective="great", semester=semester1)
 eval2 = Evaluation(evaler=student2, evalee=student1, week=1, rank=1,token=4, description="i'd like to work", adjective="good", semester=semester1)
 eval3 = Evaluation(evaler=student2, evalee=student1, week=2, rank=1,token=3, description="i'd love to work", adjective="great", semester=semester1)
 eval4 = Evaluation(evaler=student2, evalee=student3, week=2, rank=2,token=1, description="i'd like to work", adjective="good", semester=semester1)
