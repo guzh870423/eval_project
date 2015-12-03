@@ -29,9 +29,9 @@ DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
 #pupulate students
-student1 = Student(user_name="adam", first_name="Adam", last_name="Cole")
-student2 = Student(user_name="bob", first_name="Robert", last_name="Gates", alias_name="Bob")
-student3 = Student(user_name="charlie", first_name="Charlie", last_name="Chan")
+student1 = Student(user_name="adam", login_key="adam", first_name="Adam", last_name="Cole")
+student2 = Student(user_name="bob", login_key="adam", first_name="Robert", last_name="Gates", alias_name="Bob")
+student3 = Student(user_name="charlie", login_key="adam", first_name="Charlie", last_name="Chan")
 
 session.add(student1)
 session.add(student2)

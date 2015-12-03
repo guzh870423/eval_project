@@ -1,6 +1,17 @@
 <html>
+  <head>
+    <style type="text/css">
+        h2 {page-break-before: always}
+    </style>
+  </head>
   <body>
-    <h1>Reports for semester {{semesterName}}, week {{currentWeek}}</h1>
+    <h2>Reports for semester {{semesterName}}, week {{currentWeek}}</h1>
+    <p id="demo"></p>
+
+    <script>
+        document.getElementById("demo").innerHTML = Date();
+    </script>
+
     <table border="1 px solid black">
         <caption>Average ranks <br>
             normalized rank =  rank / number of reviews given by evaler. Range: (0,1]<br>
@@ -14,19 +25,22 @@
             <th>norm. avg. token</th>
         </tr>
         {% for student in students %}
-        <tr>
-            <td>{{ names[student.user_name] }}</td>
-            <td>{{len(reversedEvals[currentWeek-1][student.user_name])}}</td>
-            <td>{{averageRank[currentWeek-1][student.user_name]}}</td>
-            <td>{{weightedRank[student.user_name]}}</td>
-            <td>{{averageToken[currentWeek-1][student.user_name]}}</td>
-        </tr>
+            {% if student.is_active %}
+                <tr>
+                    <td>{{ names[student.user_name] }}</td>
+                    <td>{{len(reversedEvals[currentWeek-1][student.user_name])}}</td>
+                    <td>{{averageRank[currentWeek-1][student.user_name]}}</td>
+                    <td>{{weightedRank[student.user_name]}}</td>
+                    <td>{{averageToken[currentWeek-1][student.user_name]}}</td>
+                </tr>
+            {% endif %}
         {% endfor %}
     </table>
     {% for student in students %}
         <br>
+        <h2>Evalee: {{ names[student.user_name] }}</h2>
         <table border="1 px solid black">
-            <caption>Evalee: {{ names[student.user_name]  }}</caption>
+            
             <tr>
                 <th>Evaler</th>
                 <th>team week</th>
@@ -44,7 +58,7 @@
                     <td>{{ reversedEvals[currentWeek-1][student.user_name][evaler][1] }}</th>
                     <td>{{ reversedEvals[currentWeek-1][student.user_name][evaler][2] }}</th>
                     <td width="100px" style="word-wrap:break-word;">{{ reversedEvals[currentWeek-1][student.user_name][evaler][0].adjective }}</th>
-                    <td width="300px" style="word-wrap:break-word;">{{ reversedEvals[currentWeek-1][student.user_name][evaler][0].description }}</th>
+                    <td width="600px" style="word-wrap:break-word;">{{ reversedEvals[currentWeek-1][student.user_name][evaler][0].description }}</th>
                 </tr>
             {% endfor %}
         </table>

@@ -36,12 +36,12 @@ evalCipher = EvalCipher(key)
 @app.route('/main', methods=['GET', 'POST'])
 def main():
     if request.method == 'POST':
-        year_season = request.form['semester']
-        year = int(year_season.split(" ")[0])
-        season = year_season.split(" ")[1]
-        semester = session.query(Semester).filter_by(season=season, year=year).one()
-        week=request.form['week']
-        return redirect(url_for('reports', semester_id=semester.id, currentWeek=week))
+        semester_id = request.form['semester']
+        if request.form['submit'] == 'Get reports':
+            week=request.form['week']
+            return redirect(url_for('reports', semester_id=semester_id, currentWeek=week))
+        elif request.form['submit'] == 'Set student alias_name':
+            return redirect(url_for('set_alias', semester_id=semester_id))
     else:
         semesters = session.query(Semester).all()
   
@@ -376,6 +376,18 @@ def login():
         else:
             return redirect(url_for('list_all', username=username))
     return render_template('index.html', error=error)
+    
+@app.route('/set_alias/<int:semester_id>', methods=['GET', 'POST'])
+def set_alias(semester_id):
+    students = queryStudents(semester_id)
+    if request.method == 'POST':
+        student_id = request.form['student']
+        alias = request.form['alias_name']
+        student = session.query(Student).filter_by(user_name=student_id).one()
+        student.alias_name = alias
+        session.add(student)
+        session.commit()
+    return render_template('alias.html', students=students)   
 if __name__ == '__main__':
     app.debug = True
     app.run(host='0.0.0.0', port=5000)

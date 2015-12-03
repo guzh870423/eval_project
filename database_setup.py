@@ -26,6 +26,7 @@ class Student(Base):
     login_key = Column(VARCHAR(50))
     create_time = Column(TIMESTAMP, nullable=False, server_default=func.now())
     alias_name = Column(VARCHAR(11))
+    is_active = Column(Integer, default=1)
     @property
     def serialize(self):
         """Return object data in easily serializeable format"""
