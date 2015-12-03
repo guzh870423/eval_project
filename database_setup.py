@@ -7,14 +7,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.sql import func
 from ConfigParser import SafeConfigParser
 
-parser = SafeConfigParser()
-parser.read('config.ini')
-username = parser.get('login', 'username')
-password = parser.get('login', 'password')
-schema = parser.get('login', 'schema')
-host = parser.get('login', 'host')
-port = parser.get('login', 'port')
-
 Base = declarative_base()
 
 class Student(Base):
@@ -219,6 +211,15 @@ class Group_Student(Base):
         
     
 if __name__ == '__main__':    
+    parser = SafeConfigParser()
+    parser.read('config.ini')
+    username = parser.get('login', 'username')
+    password = parser.get('login', 'password')
+    schema = parser.get('login', 'schema')
+    host = parser.get('login', 'host')
+    port = parser.get('login', 'port')
+
+
     engine = create_engine('mysql://' + username + ':' + password + '@' + host +':' + port + '/' + schema) 
 
     Base.metadata.drop_all(engine)

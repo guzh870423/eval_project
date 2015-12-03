@@ -13,8 +13,8 @@ from sqlalchemy.sql import exists
 round_digits = 3
 parser = SafeConfigParser()
 parser.read('config.ini')
-username = parser.get('login', 'username')
-password = parser.get('login', 'password')
+#username = parser.get('login', 'username')
+#password = parser.get('login', 'password')
 schema = parser.get('login', 'schema')
 host = parser.get('login', 'host')
 port = parser.get('login', 'port')
@@ -25,16 +25,18 @@ for weight in parser.get('constants', 'weights_for_average_rank').split(','):
 
 app = Flask(__name__)
 
-engine = create_engine('mysql://' + username + ':' + password + '@' + host +':' + port + '/' + schema) 
-Base.metadata.bind = engine
-DBSession = sessionmaker(bind=engine)
-session = DBSession()
+#engine = create_engine('mysql://' + username + ':' + password + '@' + host +':' + port + '/' + schema) 
+#Base.metadata.bind = engine
+#DBSession = sessionmaker(bind=engine)
+session = None #DBSession()
 
 key = parser.get('security', 'key')
 evalCipher = EvalCipher(key)
 
 @app.route('/main', methods=['GET', 'POST'])
 def main():
+    if not session:
+        return redirect(url_for('login'))
     if request.method == 'POST':
         semester_id = request.form['semester']
         if request.form['submit'] == 'Get reports':
@@ -114,6 +116,8 @@ def chart():
       ) 
 @app.route('/reports/<int:semester_id>/<int:currentWeek>', methods=['GET', 'POST'])
 def reports(semester_id, currentWeek):
+    if not session:
+        return redirect(url_for('login'))
     semester = session.query(Semester).filter_by(id=semester_id).one()
     
     # list of students
@@ -147,7 +151,7 @@ def reports(semester_id, currentWeek):
 
     print averageRank
     # generate performance trend chart for each student 
-    generateCharts(currentWeek, semester_id, students, connection, averageRank)
+    generateCharts(currentWeek, semester_id, students, connection, names, averageRank)
     
     return render_template('reports.html',
         semester=semester,
@@ -265,50 +269,53 @@ def queryEvals(currentWeek, semester_id, students, connection):
         averageToken.append(averageTokenOneWeek)
     return evals, reversedEvals, sortedEvaler, averageRank, averageToken
 
-def generateCharts(currentWeek, semester_id, students, connection, averageRank):
+def generateCharts(currentWeek, semester_id, students, connection, names, averageRank):
     options = {
+        'chart':{
+            'width': 1000,
+            'height': 500,
+        },
         'title': {
-        'text': 'Normalized Rank Chart'
+            'text': 'Normalized Rank Chart'
         },
         'xAxis': {
-        'reversed': True,
-        'title': {
-            'enabled': True,
-            'text': 'Normalized Rank'
+            'reversed': True,
+            'title': {
+                'enabled': True,
+                'text': 'Normalized Rank'
         },
         'labels': {
             'formatter': 'function () {\
                 return this.value;\
             }'
         },
-        'maxPadding': 0.05,
         'showLastLabel': True
         },
         'yAxis': {
-        'title': {
-            'text': 'Week'
-        },
-        'labels': {
-            'formatter': "function () {\
-                return this.value;\
-            }"
-        },
-        'lineWidth': 2
+            'title': {
+                'text': 'Week'
+            },
+            'labels': {
+                'formatter': "function () {\
+                    return this.value;\
+                }"
+            },
+            'lineWidth': 2
         },
         'legend': {
-        'enabled': False
+            'enabled': False
         },
         'tooltip': {
-        'headerFormat': '<b>{series.name}</b><br/>',
-        'pointFormat': 'Rank {point.x}: Week {point.y}'
-        }
+            'headerFormat': '<b>{series.name}</b><br/>',
+            'pointFormat': 'Rank {point.x}: Week {point.y}'
+        },           
     }
 
     for student in students:
         chart = Highchart()
         chart.set_options('chart', {'inverted': True})
-        options['title']['text'] = student.user_name
-        options['chart'] = {'renderTo': 'container_' + student.user_name}
+        options['title']['text'] = names[student.user_name]
+        options['chart']['renderTo'] = 'container_' + student.user_name
         chart.set_dict_options(options)    
         data = []
         for week in range(1, currentWeek + 1):
@@ -341,41 +348,26 @@ def computeWeightedRanks(currentWeek, connection, reversedEvals, weightsForAvera
                 weightsSum += weightsForAverageRank[week-1]
         weightedRank[evalee] = round(weightedRank[evalee] / weightsSum, round_digits)
     return weightedRank
-        
-@app.route('/eval')
-def list_all():
-   max_week = session.query(func.max(Groups.week).label('maxweek'))
-   
-   evaler = aliased(Group_Student)
-   evalee = aliased(Group_Student)
 
-   sub_groups = session.query(Groups.week, Groups.id.label('GROUP_ID'), Group_Student.student_id).filter(Groups.id==Group_Student.group_id, Groups.week==max_week).subquery()
-
-   sub_student_evals = session.query(Groups.week, Groups.id, evaler.student_id.label('EVALER_ID'), evalee.student_id.label('EVALEE_ID')).filter(Groups.id==evaler.group_id, evaler.group_id==evalee.group_id, evaler.student_id<>evalee.student_id, evaler.student_id==request.args['username']).order_by(Groups.week, evaler.student_id, evalee.student_id).subquery()
-
-   current_evals = session.query(sub_groups.c.week.label('WEEK'), sub_student_evals.c.EVALER_ID, sub_student_evals.c.EVALEE_ID).filter(sub_groups.c.week >= sub_student_evals.c.week, sub_groups.c.student_id == sub_student_evals.c.EVALER_ID).group_by(sub_groups.c.week.label('WEEK'), sub_student_evals.c.EVALER_ID, sub_student_evals.c.EVALEE_ID).order_by(sub_groups.c.week, sub_student_evals.c.EVALER_ID).subquery()
-   
-   form_evals = session.query(current_evals.c.WEEK, current_evals.c.EVALEE_ID, Student.first_name, Student.last_name).join(Student, current_evals.c.EVALEE_ID==Student.user_name).order_by(current_evals.c.EVALEE_ID)
-
-   return render_template(
-       'eval.html',
-       username = request.args['username'],
-       form_evals=form_evals)
-
+@app.route('/', methods=['GET', 'POST'])
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    error = None
+    global session
     if request.method == 'POST':
         username = request.form['username']
         pwd = request.form['password']
-        users = session.query(Student).all()
-        isAuthentic = session.query(exists().where(and_(Student.user_name==username, Student.login_key==pwd))).scalar()
-        print(isAuthentic)
-        if isAuthentic != True:
-            error = 'Invalid Credentials. Please try again.'
-        else:
-            return redirect(url_for('list_all', username=username))
-    return render_template('index.html', error=error)
+        engine = create_engine('mysql://' + username + ':' + pwd + '@' + host +':' + port + '/' + schema)
+        try:
+            engine.connect()
+            Base.metadata.bind = engine
+            DBSession = sessionmaker(bind=engine)
+            session = DBSession()
+        
+            return redirect(url_for('main'))
+        except:
+            error = 'Failed to cennect to database. Probably invalid Credentials. Please try again.'
+            return render_template('admin_login.html', error=error)
+    return render_template('admin_login.html')
     
 @app.route('/set_alias/<int:semester_id>', methods=['GET', 'POST'])
 def set_alias(semester_id):
