@@ -1,19 +1,22 @@
 <html>
-  <head>
+  <head>    
     <style type="text/css">
         h2 {page-break-before: always}
     </style>
+      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
   </head>
   <body>
-    <h2>Reports for semester {{semester.year}} {{ semester.season }} {{ semester.course_no }}, week {{currentWeek}}</h2>
+    <h1>Reports for semester {{semester.year}} {{ semester.season }} {{ semester.course_no }}, week {{currentWeek}}</h2>
     <p id="demo"></p>
 
     <script>
         document.getElementById("demo").innerHTML = Date();
     </script>
-
+    <div class="container">
     <h2>Average ranks </h2>
-    <table border="1 px solid black">
+    <div class="row">
+    <div class ="col-md-6 col-md-push-3">
+    <table class="table table-hover">
         <caption>
             normalized rank =  rank / number of reviews given by evaler. Range: (0,1]<br>
             normalized token = token * number of reviews given by evaler.
@@ -37,10 +40,21 @@
             {% endif %}
         {% endfor %}
     </table>
+    </div>
+    </div>
+    <div>
+    {% include 'charts/compare.html' %}
+    </div>
+  
+    
+    
+    
     {% for student in students %}
         <br>
         <h2>Evalee: {{ names[student.user_name] }}</h2>
-        <table border="1 px solid black">
+        <div class="row">
+            <div class ="col-md-6 col-md-push-3">
+            <table class="table table-hover">
             
             <tr>
                 <th>Evaler</th>
@@ -54,18 +68,21 @@
             {% for evaler in sortedEvaler[currentWeek-1][student.user_name] %}
                 <tr>
                     <td>{{ names[evaler] }}</th>
-                    <td width="80px" style="word-wrap:break-word;">{{ connection[student.user_name][evaler] }}</th>
+                    <td>{{ connection[student.user_name][evaler] }}</th>
                     <td>{{ len(evals[currentWeek-1][evaler]) }}</th>
                     <td>{{ reversedEvals[currentWeek-1][student.user_name][evaler][1] }}</th>
                     <td>{{ reversedEvals[currentWeek-1][student.user_name][evaler][2] }}</th>
-                    <td width="100px" style="word-wrap:break-word;">{{ reversedEvals[currentWeek-1][student.user_name][evaler][0].adjective }}</th>
-                    <td width="600px" style="word-wrap:break-word;">{{ reversedEvals[currentWeek-1][student.user_name][evaler][0].description }}</th>
+                    <td>{{ reversedEvals[currentWeek-1][student.user_name][evaler][0].adjective }}</th>
+                    <td>{{ reversedEvals[currentWeek-1][student.user_name][evaler][0].description }}</th>
                 </tr>
             {% endfor %}
         </table>
-
+    </div>
+    </div>
         {% include 'charts/' + student.user_name + '.html' %}
+    
     {% endfor %}
-
+    </div>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
   </body>
 </html>

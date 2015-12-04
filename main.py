@@ -9,6 +9,7 @@ from itertools import groupby
 from sqlalchemy import func, and_
 from sqlalchemy.orm import aliased
 from sqlalchemy.sql import exists
+import copy
 
 round_digits = 3
 parser = SafeConfigParser()
@@ -33,6 +34,49 @@ session = None #DBSession()
 key = parser.get('security', 'key')
 evalCipher = EvalCipher(key)
 
+raw_options = {
+    'chart':{
+            'width': 1000,
+            'height': 500,
+    },
+    'title':{
+    },
+    'xAxis': {
+        'title': {
+                'enabled': True,                
+        },
+        'labels': {
+            'formatter': 'function () {\
+                return this.value;\
+            }'
+        },
+        'showLastLabel': True
+    },
+    'yAxis': {
+        'reversed': True,
+            'title': {
+                
+            },
+            'labels': {
+                'formatter': "function () {\
+                    return this.value;\
+                }"
+            },
+            'lineWidth': 2
+    },
+    'legend': {
+            'enabled': True,
+    },
+        'tooltip': {
+            'headerFormat': '<b>{series.name}</b><br/>',
+            'pointFormat': 'Rank {point.x}: Week {point.y}'
+        },
+    'navigation':{
+            'buttonOptions':{
+                'enabled': False,
+            }
+    },
+}
 @app.route('/main', methods=['GET', 'POST'])
 def main():
     if not session:
@@ -149,9 +193,10 @@ def reports(semester_id, currentWeek):
     # compute weighted average rank
     weightedRank = computeWeightedRanks(currentWeek, connection, reversedEvals, weightsForAverageRank)
 
-    print averageRank
+    # generate performance trend comparison chart for all students
+    compareChart(currentWeek, students, names, averageRank)
     # generate performance trend chart for each student 
-    generateCharts(currentWeek, semester_id, students, connection, names, averageRank)
+    generateCharts(currentWeek, students, names, averageRank)
     
     return render_template('reports.html',
         semester=semester,
@@ -269,51 +314,38 @@ def queryEvals(currentWeek, semester_id, students, connection):
         averageToken.append(averageTokenOneWeek)
     return evals, reversedEvals, sortedEvaler, averageRank, averageToken
 
-def generateCharts(currentWeek, semester_id, students, connection, names, averageRank):
-    options = {
-        'chart':{
-            'width': 1000,
-            'height': 500,
-        },
-        'title': {
-            'text': 'Normalized Rank Chart'
-        },
-        'xAxis': {
-            'reversed': True,
-            'title': {
-                'enabled': True,
-                'text': 'Normalized Rank'
-        },
-        'labels': {
-            'formatter': 'function () {\
-                return this.value;\
-            }'
-        },
-        'showLastLabel': True
-        },
-        'yAxis': {
-            'title': {
-                'text': 'Week'
-            },
-            'labels': {
-                'formatter': "function () {\
-                    return this.value;\
-                }"
-            },
-            'lineWidth': 2
-        },
-        'legend': {
-            'enabled': False
-        },
-        'tooltip': {
-            'headerFormat': '<b>{series.name}</b><br/>',
-            'pointFormat': 'Rank {point.x}: Week {point.y}'
-        },           
-    }
-
+def compareChart(currentWeek, students, names, averageRank):
+    options = copy.deepcopy(raw_options)
+    options['title']['text'] = 'Normalized Rank Comparison Chart'
+    options['yAxis']['title']['text'] = 'Normalized Rank'
+    options['xAxis']['title']['text'] = 'Week'
+    chart = Highchart()
+    chart.set_dict_options(options)
+    series = []
+    
     for student in students:
+        if not student.is_active:
+            continue
+        name = names[student.user_name]
+        data = []
+        for week in range(1, currentWeek + 1):
+            rank = averageRank[week-1].get(student.user_name)
+            if rank is not None:
+                point = [week, rank]
+                data.append(point)
+        series.append({'name': name, 'data': data})
+        chart.add_data_set(data, 'spline', name, marker={'enabled': True})
+    options['series'] = series
+    chart.save_file('templates/charts/compare')
+
+def generateCharts(currentWeek, students, names, averageRank):
+    options = copy.deepcopy(raw_options)
+    options['yAxis']['title']['text'] = 'Normalized Rank'
+    options['xAxis']['title']['text'] = 'Week'
+    for student in students:
+        if not student.is_active:
+            continue
         chart = Highchart()
-        chart.set_options('chart', {'inverted': True})
         options['title']['text'] = names[student.user_name]
         options['chart']['renderTo'] = 'container_' + student.user_name
         chart.set_dict_options(options)    
@@ -321,9 +353,9 @@ def generateCharts(currentWeek, semester_id, students, connection, names, averag
         for week in range(1, currentWeek + 1):
             rank = averageRank[week-1].get(student.user_name)
             if rank is not None:
-                points = [rank, week]
+                points = [week, rank]
                 data.append(points)    
-                chart.add_data_set(data, 'spline', 'Normalized Rank', marker={'enabled': True})
+        chart.add_data_set(data, 'spline', 'Normalized Rank', marker={'enabled': True})
         chart.save_file('templates/charts/' + student.user_name)
 
 def mapNames(students):
