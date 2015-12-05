@@ -28,16 +28,14 @@
             <th>weigh. avg. rank</th>
             <th>norm. avg. token</th>
         </tr>
-        {% for student in students %}
-            {% if student.is_active %}
+        {% for student_id in sortedByAverageRank %}
                 <tr>
-                    <td>{{ names[student.user_name] }}</td>
-                    <td>{{len(reversedEvals[currentWeek-1][student.user_name])}}</td>
-                    <td>{{averageRank[currentWeek-1][student.user_name]}}</td>
-                    <td>{{weightedRank[student.user_name]}}</td>
-                    <td>{{averageToken[currentWeek-1][student.user_name]}}</td>
+                    <td>{{ names[student_id] }}</td>
+                    <td>{{len(reversedEvals[currentWeek-1][student_id])}}</td>
+                    <td>{{averageRank[currentWeek-1][student_id]}}</td>
+                    <td>{{weightedRank[student_id]}}</td>
+                    <td>{{averageToken[currentWeek-1][student_id]}}</td>
                 </tr>
-            {% endif %}
         {% endfor %}
     </table>
     </div>

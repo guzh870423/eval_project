@@ -185,8 +185,8 @@ def reports(semester_id, currentWeek):
     averageToken = []
     evals, reversedEvals, sortedEvaler, averageRank, averageToken = queryEvals(currentWeek, semester_id, students, connection)
 
-    #sortedByAverageRank = sorted(averageRank, key=averageRank.get)
-    #print sortedByAverageRank
+    # sort students by unweighted average rank
+    sortedByAverageRank = sorted(averageRank[currentWeek-1], key=averageRank[currentWeek-1].get)
 
     # names is a map from "user_name" to "alias_name" (if exists) or "first_name last_name" 
     names = mapNames(students)
@@ -197,12 +197,13 @@ def reports(semester_id, currentWeek):
     # generate performance trend comparison chart for all students
     compareChart(currentWeek, students, names, averageRank)
     # generate performance trend chart for each student 
-    generateCharts(currentWeek, students, names, averageRank)
+    generateCharts(currentWeek, students, names, averageRank, averageToken)
     
     return render_template('reports.html',
         semester=semester,
         currentWeek=currentWeek,
         students=students,
+        sortedByAverageRank=sortedByAverageRank,
         names=names,
         connection=connection,
         evals=evals,
@@ -289,6 +290,13 @@ def queryEvalByWeek(semester_id, week, students, connection):
                 sortedEvalerOneWeek[evalee].append(evaler)
     
     for evalee in reversedEvalsOneWeek:
+        flag = True
+        for student in students:
+            if student.user_name == evalee and not student.is_active:
+                flag = False
+                break
+        if not flag:
+            continue
         averageRankOneWeek[evalee] = 0
         averageTokenOneWeek[evalee] = 0
         for evaler in reversedEvalsOneWeek[evalee]:
@@ -336,12 +344,36 @@ def compareChart(currentWeek, students, names, averageRank):
                 data.append(point)
         series.append({'name': name, 'data': data})
         chart.add_data_set(data, 'spline', name, marker={'enabled': True})
-    options['series'] = series
+    #options['series'] = series
     chart.save_file('templates/charts/compare')
 
-def generateCharts(currentWeek, students, names, averageRank):
+def generateCharts(currentWeek, students, names, averageRank, averageToken):
     options = copy.deepcopy(raw_options)
-    options['yAxis']['title']['text'] = 'Normalized Rank'
+    options['yAxis'] = [{
+        'reversed': True,
+            'title': {
+                'text': 'Normalized Rank'
+            },
+            'labels': {
+                'formatter': "function () {\
+                    return this.value;\
+                }"
+            },
+            'lineWidth': 2
+    },
+    {
+            'title': {
+                'text': 'Normalized Token'
+            },
+            'labels': {
+                'formatter': "function () {\
+                    return this.value;\
+                }"
+            },
+            'lineWidth': 2,
+            'opposite': True
+    },
+    ]
     options['xAxis']['title']['text'] = 'Week'
     for student in students:
         if not student.is_active:
@@ -350,13 +382,18 @@ def generateCharts(currentWeek, students, names, averageRank):
         options['title']['text'] = names[student.user_name]
         options['chart']['renderTo'] = 'container_' + student.user_name
         chart.set_dict_options(options)    
-        data = []
+        rank_data = []
+        token_data = []
         for week in range(1, currentWeek + 1):
             rank = averageRank[week-1].get(student.user_name)
-            if rank is not None:
-                points = [week, rank]
-                data.append(points)    
-        chart.add_data_set(data, 'spline', 'Normalized Rank', marker={'enabled': True})
+            token = averageToken[week-1].get(student.user_name)
+            if rank is not None and token is not None:
+                point = [week, rank]
+                rank_data.append(point)
+                point = [week, token]
+                token_data.append(point)
+        chart.add_data_set(rank_data, 'spline', 'Normalized Rank', marker={'enabled': True})
+        chart.add_data_set(token_data, 'spline', 'Normalized Token', marker={'enabled': True}, yAxis=1)
         chart.save_file('templates/charts/' + student.user_name)
 
 def mapNames(students):
