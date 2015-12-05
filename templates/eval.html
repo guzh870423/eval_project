@@ -35,10 +35,10 @@
             <div class='col-md-8'>
               <div class='col-md-3'>
                 <div class='form-group internal'>
-                  <input class='form-control col-md-8' id='Token_{{item}}' placeholder='Tokens' type='number' onfocus='tokenSum()'>
-				  <input id='test' type='text' value='{{item}}' hidden='true'/>
-                </div>
-              </div>              
+                  <input class='form-control col-md-8' id='Token_{{item}}' placeholder='Tokens' type='number' onfocus='showTokenSum()' onblur='hideTokenSum()'>				  
+                </div>				
+              </div>  
+			  <label class='form-message' id='remaining-tokens'/>			  
             </div>
 			</div>
 			<div class='form-group'>
@@ -74,18 +74,20 @@
 var tokenCount=100;
 var tokensEntered=0;
 
-function tokenSum(){
+function showTokenSum(){
 var countCheck =   $('*[id^="Token"]');
 var sum=0;
 for(var i =0; i< countCheck.length;i++)
 	{
 	temp=Number(countCheck[i].value);
 	sum+=temp;
-	//alert(sum);
 	}
-	//alert('Tokens Entered: '+sum);
 	tokensEntered=sum;
-	alert('Remaining tokens: '+Number(tokenCount-tokensEntered));
+	$('.form-message').text(tokenCount-tokensEntered + ' tokens remaning.');	
+}
+
+function hideTokenSum(){
+	$('.form-message').text('');	
 }
 </script>
 </html>

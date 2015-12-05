@@ -44,4 +44,10 @@ label.control-label {
 .panel-heading{
   background: #0399DB !important;
 }
+.form-message{
+  color: #888888;
+  font-weight: lighter;
+  padding-left: 10px;
+  padding-top: 8px;
+}
 
