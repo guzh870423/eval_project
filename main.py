@@ -42,6 +42,7 @@ raw_options = {
     'title':{
     },
     'xAxis': {
+        'allowDecimals': False,
         'title': {
                 'enabled': True,                
         },
