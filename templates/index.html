@@ -5,7 +5,16 @@
 <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
 </head>
 <body>
-	<div class="container">
+    <div class="container">
+        <div class='flash-message'>
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            {% for message in messages %}
+                {{ message | safe }}
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+        </div>
 		<div id="login-form">
 			<h3>P532/P632 Evaluation Login</h3>
 			<fieldset>

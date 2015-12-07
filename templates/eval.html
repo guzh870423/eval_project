@@ -6,80 +6,87 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}">
   <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel='stylesheet' type='text/css'>
   <script src='//cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js' type='text/javascript'></script>
+ <script src='//cdn.jsdelivr.net/jquery.validation/1.14.0/jquery.validate.js' type='text/javascript'></script>
+ <script src='//cdn.jsdelivr.net/jquery.validation/1.14.0/jquery.validate.min.js' type='text/javascript'></script>
   <script src='//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.0.0/js/bootstrap.min.js' type='text/javascript'></script>
   <script src='//cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/1.8/js/bootstrap-switch.min.js' type='text/javascript'></script>
   <script src='http://davidstutz.github.io/bootstrap-multiselect/js/bootstrap-multiselect.js' type='text/javascript'></script>
 </head>
 <body>
-	<div class="form-header">Evaluation for week {{form_evals[0].WEEK}}</div>
-	{% for item in form_evals %}
+	<div class="form-header">Evaluation for week {{form.evaluations[0]['week'].data}}</div>
+    <div class='container'>
+    <a class = 'logout-link' href='{{url_for('logout')}}'>Logout</a>
+    </div>
+	<form id="eval-form" class='form-horizontal' role='form' method='post' action=''>
+	{% for eval in form.evaluations %}
+	<div style='display:none;'>{{eval['evaler_id']}},{{eval['evalee_id']}},{{eval['week']}}</div>
 	<div class='container'>
     <div class='panel panel-primary dialog-panel'>
       <div class='panel-heading'>
-        <h4>{{ item.first_name}} {{item.last_name }}</h4>
+        <h4>{{eval['evalee_id'].data}}</h4>
       </div>
       <div class='panel-body'>
-        <form class='form-horizontal' role='form'>
-		  <div class='form-group'>
-            <label class='control-label col-md-2 col-md-offset-2' for='id_adults'>Rank</label>
+          <div class='form-group'>
+		    {{eval['rank'].label(class='control-label col-md-2 col-md-offset-2')}}
             <div class='col-md-8'>
               <div class='col-md-3'>
                 <div class='form-group internal'>
-                  <input class='form-control col-md-8' id='Rank_{{item}}' placeholder='Rank' type='number'>
+				{{eval['rank'](class='form-control col-md-8',  placeholder='Rank')}}
                 </div>
               </div>              
             </div>
 			</div>
 			<div class='form-group'>
-			<label class='control-label col-md-2 col-md-offset-2' for='id_adults'>Tokens</label>
-            <div class='col-md-8'>
+			{{eval['tokens'].label(class='control-label col-md-2 col-md-offset-2')}}
+			<div class='col-md-8'>
               <div class='col-md-3'>
                 <div class='form-group internal'>
-                  <input class='form-control col-md-8' id='Token_{{item}}' placeholder='Tokens' type='number' onfocus='showTokenSum()' onblur='hideTokenSum()'>				  
+				{{eval['tokens'](class='form-control col-md-8',  placeholder='Tokens', onfocus='showTokenSum()', onblur='hideTokenSum()')}}                  
                 </div>				
               </div>  
 			  <label class='form-message' id='remaining-tokens'/>			  
             </div>
 			</div>
 			<div class='form-group'>
-			<label class='control-label col-md-2 col-md-offset-2' for='id_adults'>Adjective</label>
+			{{eval['adjective'].label(class='control-label col-md-2 col-md-offset-2')}}
             <div class='col-md-8'>             
                 <div class='col-md-3'>
 				  <div class='form-group internal'>
-					<input class='form-control' id='Adjective_{{item}}' placeholder='Adjective' type='text'>
+				    {{eval['adjective'](class='form-control', placeholder='Adjective')}}  
 				  </div>
                 </div>
             </div>
           </div>
           <div class='form-group'>
-            <label class='control-label col-md-2 col-md-offset-2' for='id_comments'>Comments</label>
+            {{eval['description'].label(class='control-label col-md-2 col-md-offset-2')}}
             <div class='col-md-6'>
-              <textarea class='form-control' id='Id_comments_{{item}}' placeholder='Additional comments' rows='3'></textarea>
+			{{eval['description'](class='form-control col-md-8', placeholder='Additional comments')}} 
             </div>
-          </div>          
-        </form>
+          </div>                  
       </div>	  
     </div>	 
-  </div>
-  {% endfor %}
-  <div>
-	<div class='center-button'>
-	  <button class='btn-lg btn-primary' type='submit'>Submit Evaluation</button>
-	</div>	
-  </div>
- 
+    </div>
+    {% endfor %}
+    <div>
+      <div class='center-button'>
+	   <button class='btn-lg btn-primary' type='submit'>Submit Evaluation</button>
+	  </div>	
+    </div>
+ </form>
 </body>
 
-<script>
+<script type="text/javascript">
 var tokenCount=100;
 var tokensEntered=0;
 
 function showTokenSum(){
-var countCheck =   $('*[id^="Token"]');
+var countCheck = $("[id*='tokens']");
 var sum=0;
+
 for(var i =0; i< countCheck.length;i++)
 	{
-	temp=Number(countCheck[i].value);
+    temp=parseInt(countCheck[i].value);
+    if (isNaN(temp)) temp = 0;
 	sum+=temp;
 	}
 	tokensEntered=sum;
