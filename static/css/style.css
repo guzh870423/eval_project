@@ -155,3 +155,7 @@ input[type="submit"] {
   text-align: center;
   width: 20px;
 }
+.flash-message{
+    text-align: center;
+    padding: 10px;
+}

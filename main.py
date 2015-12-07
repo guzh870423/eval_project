@@ -435,7 +435,7 @@ def login():
         
             return redirect(url_for('main'))
         except:
-            error = 'Failed to cennect to database. Probably invalid Credentials. Please try again.'
+            error = 'Invalid Credentials. Please try again.'
             return render_template('admin_login.html', error=error)
     return render_template('admin_login.html')
     

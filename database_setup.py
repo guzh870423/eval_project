@@ -6,6 +6,10 @@ from sqlalchemy.orm import relationship
 from sqlalchemy import create_engine
 from sqlalchemy.sql import func
 from ConfigParser import SafeConfigParser
+from flask.ext.wtf import Form
+from wtforms import IntegerField, TextField, validators, FieldList, FormField, TextAreaField, HiddenField
+from wtforms.validators import Required, Length, Optional
+from wtforms import Form as WTForm
 
 Base = declarative_base()
 
@@ -208,8 +212,19 @@ class Group_Student(Base):
             'student_id': self.student_id,
             'group_id': self.group_id,
         }
-        
-    
+
+class EvalForm(WTForm):
+    evaler_id = HiddenField('evaler_id', validators=[Required()])
+    evalee_id = HiddenField('evalee_id', validators=[Required()])
+    week = HiddenField('week', validators=[Required()])
+    rank = IntegerField('Rank', validators=[Required()])
+    tokens = IntegerField(u'Tokens', validators=[Required()])
+    adjective = TextField('Adjective', validators=[Required()])
+    description = TextAreaField('Description', validators=[Required()])
+
+class EvalListForm(Form):
+    evaluations = FieldList(FormField(EvalForm), validators=[Required()])
+
 if __name__ == '__main__':    
     parser = SafeConfigParser()
     parser.read('config.ini')
