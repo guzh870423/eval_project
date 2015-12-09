@@ -1,9 +1,11 @@
 <html>
   <head>    
+    
+      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
     <style type="text/css">
         h2 {page-break-before: always}
+       
     </style>
-      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
   </head>
   <body>
     <h1>Reports for semester {{semester.year}} {{ semester.season }} {{ semester.course_no }}, week {{currentWeek}}</h2>
@@ -13,6 +15,14 @@
         document.getElementById("demo").innerHTML = Date();
     </script>
     <div class="container">
+    {% if missingNames %}
+    <h2>Students
+    {% for name in missingNames %}
+    {{names[name]}}, 
+    {% endfor %}
+    have not submitted evals yet.
+    </h2>
+    {% endif %}
     <h2>Average ranks </h2>
     <div class="row">
     <div class ="col-md-6 col-md-push-3">
@@ -23,18 +33,18 @@
         </caption>
         <tr>
             <th>student</th>
-            <th>NO. of reveiws</th>
             <th>unweigh. avg. rank</th>
             <th>weigh. avg. rank</th>
             <th>norm. avg. token</th>
+            <th>NO. of reveiws</th>
         </tr>
         {% for student_id in sortedByAverageRank %}
                 <tr>
                     <td>{{ names[student_id] }}</td>
-                    <td>{{len(reversedEvals[currentWeek-1][student_id])}}</td>
                     <td>{{averageRank[currentWeek-1][student_id]}}</td>
                     <td>{{weightedRank[student_id]}}</td>
                     <td>{{averageToken[currentWeek-1][student_id]}}</td>
+                    <td>{{len(reversedEvals[currentWeek-1][student_id])}}</td>
                 </tr>
         {% endfor %}
     </table>
@@ -51,6 +61,11 @@
         {% if student.is_active %}
         <br>
         <h2>Evalee: {{ names[student.user_name] }}</h2>
+        {% if currentWeek > 1 and averageRank[currentWeek-1].get(student.user_name) and averageRank[currentWeek-2].get(student.user_name) %}
+            </p>Average rank: {{ averageRank[currentWeek-1][student.user_name] }}, 
+            change {{ averageRank[currentWeek-1][student.user_name]-averageRank[currentWeek-2][student.user_name] }} 
+            from last week.</p>
+        {% endif %}
         <div class="row">
             <div class ="col-md-6 col-md-push-3">
             <table class="table table-hover">
@@ -64,7 +79,8 @@
                 <th>Adjective</th>
                 <th>Description</th>
             </tr>
-            {% for evaler in sortedEvaler[currentWeek-1][student.user_name] %}
+            {% if sortedEvaler[currentWeek-1].get(student.user_name) %}
+            {% for evaler in sortedEvaler[currentWeek-1][student.user_name][0] %}
                 <tr>
                     <td>{{ names[evaler] }}</th>
                     <td>{{ connection[student.user_name][evaler] }}</th>
@@ -75,6 +91,21 @@
                     <td>{{ reversedEvals[currentWeek-1][student.user_name][evaler][0].description }}</th>
                 </tr>
             {% endfor %}
+            {% if sortedEvaler[currentWeek-1][student.user_name][1] %}
+            <tr class="info"><td colspan="7"></td></tr>
+            {% for evaler in sortedEvaler[currentWeek-1][student.user_name][1] %}
+                <tr>
+                    <td>{{ names[evaler] }}</th>
+                    <td>{{ connection[student.user_name][evaler] }}</th>
+                    <td>{{ len(evals[currentWeek-1][evaler]) }}</th>
+                    <td>{{ reversedEvals[currentWeek-1][student.user_name][evaler][1] }}</th>
+                    <td>{{ reversedEvals[currentWeek-1][student.user_name][evaler][2] }}</th>
+                    <td>{{ reversedEvals[currentWeek-1][student.user_name][evaler][0].adjective }}</th>
+                    <td>{{ reversedEvals[currentWeek-1][student.user_name][evaler][0].description }}</th>
+                </tr>
+            {% endfor %}
+            {% endif %}
+            {% endif %}
         </table>
     </div>
     </div>

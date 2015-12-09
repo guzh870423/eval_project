@@ -184,13 +184,16 @@ def reports(semester_id, currentWeek):
     # average token: averageToken[week][student]
     averageToken = []
     evals, reversedEvals, sortedEvaler, averageRank, averageToken = queryEvals(currentWeek, semester_id, students, connection)
-
+    
     # sort students by unweighted average rank
     sortedByAverageRank = sorted(averageRank[currentWeek-1], key=averageRank[currentWeek-1].get)
 
     # names is a map from "user_name" to "alias_name" (if exists) or "first_name last_name" 
     names = mapNames(students)
-                    
+    
+    # students name list who fail to submit eval
+    missingNames = missingEvalers(currentWeek, evals, students)
+         
     # compute weighted average rank
     weightedRank = computeWeightedRanks(currentWeek, connection, reversedEvals, weightsForAverageRank)
 
@@ -205,6 +208,7 @@ def reports(semester_id, currentWeek):
         students=students,
         sortedByAverageRank=sortedByAverageRank,
         names=names,
+        missingNames=missingNames,
         connection=connection,
         evals=evals,
         reversedEvals=reversedEvals,
@@ -279,15 +283,17 @@ def queryEvalByWeek(semester_id, week, students, connection):
         #sort by rank that evaler gives to evalee
         sortedByRank = sorted(reversedEvalsOneWeek[evalee].items(), key=lambda e: e[1][1])
         #put current team members top
+        sortedEvalerOneWeek[evalee].append([])
         for item in sortedByRank:
             evaler = item[0]
             if week in connection[evalee][evaler]:
-                sortedEvalerOneWeek[evalee].append(evaler)
+                sortedEvalerOneWeek[evalee][0].append(evaler)
         # non-current team members
+        sortedEvalerOneWeek[evalee].append([])
         for item in sortedByRank:
             evaler = item[0]
             if week not in connection[evalee][evaler]:
-                sortedEvalerOneWeek[evalee].append(evaler)
+                sortedEvalerOneWeek[evalee][1].append(evaler)
     
     for evalee in reversedEvalsOneWeek:
         flag = True
@@ -404,7 +410,13 @@ def mapNames(students):
         else:
             names[student.user_name] = student.first_name + " " + student.last_name
     return names
-            
+
+def missingEvalers(currentWeek, evals, students):
+    missingNames = []
+    for student in students:
+        if not evals[currentWeek-1].get(student.user_name) and student.is_active:
+           missingNames.append(student.user_name)
+    return missingNames
 def computeWeightedRanks(currentWeek, connection, reversedEvals, weightsForAverageRank):
     weightedRank = {}
     for evalee in reversedEvals[currentWeek-1]:
