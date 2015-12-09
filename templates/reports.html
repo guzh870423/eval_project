@@ -36,7 +36,8 @@
             <th>unweigh. avg. rank</th>
             <th>weigh. avg. rank</th>
             <th>norm. avg. token</th>
-            <th>NO. of reveiws</th>
+            <th>adjective</th>
+            <th>No. of reveiws</th>
         </tr>
         {% for student_id in sortedByAverageRank %}
                 <tr>
@@ -44,6 +45,7 @@
                     <td>{{averageRank[currentWeek-1][student_id]}}</td>
                     <td>{{weightedRank[student_id]}}</td>
                     <td>{{averageToken[currentWeek-1][student_id]}}</td>
+                    <td>{{adjectives[student_id]}}</td>
                     <td>{{len(reversedEvals[currentWeek-1][student_id])}}</td>
                 </tr>
         {% endfor %}

@@ -10,6 +10,7 @@ from sqlalchemy import func, and_
 from sqlalchemy.orm import aliased
 from sqlalchemy.sql import exists
 import copy
+import operator
 
 round_digits = 3
 parser = SafeConfigParser()
@@ -94,71 +95,7 @@ def main():
   
         weeks = session.query(distinct(Groups.week)).all()
         return render_template('main.html', semesters=semesters, weeks=weeks, str=str)
-@app.route('/chart', methods=['GET'])
-def chart():
-    # A chart is the container that your data will be rendered in, it can (obviously) support multiple data series within it.
-    options = {
-        'title': {
-        'text': 'Normalized Rank Chart'
-        },
-        'xAxis': {
-        'reversed': False,
-        'title': {
-            'enabled': True,
-            'text': 'Rank'
-        },
-        'labels': {
-            'formatter': 'function () {\
-                return this.value;\
-            }'
-        },
-        'maxPadding': 0.05,
-        'showLastLabel': True
-        },
-        'yAxis': {
-        'title': {
-            'text': 'Week'
-        },
-        'labels': {
-            'formatter': "function () {\
-                return this.value;\
-            }"
-        },
-        'lineWidth': 2
-        },
-        'legend': {
-        'enabled': False
-        },
-        'tooltip': {
-        'headerFormat': '<b>{series.name}</b><br/>',
-        'pointFormat': 'Rank {point.x}: Week {point.y}'
-        }
-    }
-    chart = Highchart()
-    chart.set_options('chart', {'inverted': True})
-    chart.set_dict_options(options)    
-    data = []
-    
-    #averagedEval = session.query(Evaluation.evalee_id, Evaluation.week, func.avg(Evaluation.rank).label("avg")).filter_by(evalee_id='guzh').group_by(Evaluation.evalee_id, Evaluation.week).all()
-    students = queryStudents(1)
-    connection = queryConnection(students)
-    evals, reversedEvals, sortedEvaler, averageRank, averageToken = queryEvals(3, 1, students, connection)      
-    
-    for week in range(1, 3):
-       evalee = 'adam'
-       rank = averageRank[week]['adam']
-       
-       points = [rank, week]
-       data.append(points)    
-       chart.add_data_set(data, 'spline', 'Normalized Rank', marker={'enabled': True}) 
 
-    chart.save_file('templates/ranks')
-    
-    #Evaluations = session.query(Evaluation).all()
-    return render_template('chart.html',
-        evals=evals,
-        averageRank=averageRank
-      ) 
 @app.route('/reports/<int:semester_id>/<int:currentWeek>', methods=['GET', 'POST'])
 def reports(semester_id, currentWeek):
     if not session:
@@ -202,6 +139,9 @@ def reports(semester_id, currentWeek):
     # generate performance trend chart for each student 
     generateCharts(currentWeek, students, names, averageRank, averageToken)
     
+    # most frequent adjective for each evalee, adjectives[evalee] = adjective
+    adjectives = mostFrequentAdjectives(currentWeek, reversedEvals)
+    
     return render_template('reports.html',
         semester=semester,
         currentWeek=currentWeek,
@@ -217,6 +157,7 @@ def reports(semester_id, currentWeek):
         averageToken=averageToken,
         len=len,
         weightedRank=weightedRank,
+        adjectives=adjectives,
         )
 
 # get list of students for specified semester
@@ -431,6 +372,20 @@ def computeWeightedRanks(currentWeek, connection, reversedEvals, weightsForAvera
         weightedRank[evalee] = round(weightedRank[evalee] / weightsSum, round_digits)
     return weightedRank
 
+def mostFrequentAdjectives(currentWeek, reversedEvals):
+    result = {}
+    for evalee in reversedEvals[currentWeek-1]:
+        dict = {}
+        for evaler in reversedEvals[currentWeek-1][evalee]:
+            adjs = reversedEvals[currentWeek-1][evalee][evaler][0].adjective.split(' ,.')
+            for adj in adjs:
+                count = dict.get(adj)
+                if not count:
+                    count = 0
+                dict[adj] = count + 1
+        result[evalee] = max(dict.iteritems(), key=operator.itemgetter(1))[0]
+    return result
+             
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/login', methods=['GET', 'POST'])
 def login():
