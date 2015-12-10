@@ -90,6 +90,8 @@ def main():
             return redirect(url_for('reports', semester_id=semester_id, currentWeek=week))
         elif request.form['submit'] == 'Set student alias_name':
             return redirect(url_for('set_alias', semester_id=semester_id))
+        elif request.form['submit'] == 'Student drop class':
+            return redirect(url_for('drop_class', semester_id=semester_id))
     else:
         semesters = session.query(Semester).all()
   
@@ -414,9 +416,21 @@ def set_alias(semester_id):
         alias = request.form['alias_name']
         student = session.query(Student).filter_by(user_name=student_id).one()
         student.alias_name = alias
-        session.add(student)
         session.commit()
-    return render_template('alias.html', students=students)   
+    return render_template('alias.html', students=students)
+    
+@app.route('/drop_class/<int:semester_id>', methods=['GET', 'POST'])
+def drop_class(semester_id):
+    students = queryStudents(semester_id)
+    if request.method == 'POST':
+        student_id = request.form['student']
+        student = session.query(Student).filter_by(user_name=student_id).one()
+        if request.form['submit'] == 'Add':
+            student.is_active = 1
+        elif request.form['submit'] == 'Drop':
+            student.is_active = 0
+        session.commit()
+    return render_template('drop.html', students=students)   
 if __name__ == '__main__':
     app.debug = True
     app.run(host='0.0.0.0', port=5000)
