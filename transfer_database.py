@@ -8,8 +8,14 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import func
 from ConfigParser import SafeConfigParser
 from database_setup import Student, Base, Groups, Semester, Group_Student, Enrollment, Evaluation, EncryptedEvaluation, EvalForm, EvalListForm
+from encrypt import EvalCipher
 
 course_no = 'P532'
+parser = SafeConfigParser()
+parser.read('config.ini')
+key = parser.get('security', 'key')
+evalCipher = EvalCipher(key)
+
 engine = create_engine('mysql://root:pass123@localhost:3306/eval') 
 Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
@@ -71,12 +77,27 @@ class Evaluation0(Base0):
     TOKEN = Column(Integer, nullable=False)
     DESCRIPTION = Column(String(4096), nullable=False)
     SUBMISSION_TIME = Column(TIMESTAMP, nullable=False, server_default=func.now(), onupdate=func.current_timestamp())
-    ADJECTIVE = Column(String(128), nullable=False)
-    semester_id = Column(Integer, ForeignKey('SEMESTER.ID', onupdate="CASCADE", ondelete="CASCADE"), primary_key=True)
+    ADJ = Column(String(128), nullable=False)
+    TYPE = Column(Integer, nullable=False, server_default='1')
     evaler = relationship(Student0, foreign_keys='Evaluation0.EVALER_ID')
     evalee = relationship(Student0, foreign_keys='Evaluation0.EVALEE_ID')
-    SEMESTER = relationship(Semester0)
-
+    def convert(self):
+        evaluation = Evaluation()
+        evaluation.evaler_id = self.EVALER_ID
+        evaluation.evalee_id = self.EVALEE_ID
+        evaluation.week = self.WEEK
+        evaluation.rank = self.RANK
+        evaluation.token = self.TOKEN
+        evaluation.description = self.DESCRIPTION
+        evaluation.submission_time = self.SUBMISSION_TIME
+        evaluation.adjective = self.ADJ
+        enrollment = session.query(Enrollment).filter_by(student_id=self.EVALER_ID).first()
+        evaluation.semester_id = enrollment.semester_id
+        evaluation.semester = enrollment.semester
+        evaluation.evaler = session.query(Student).filter_by(user_name=self.EVALER_ID).first()
+        evaluation.evalee = session.query(Student).filter_by(user_name=self.EVALEE_ID).first()
+        return evalCipher.encryptEval(evaluation)
+        
         
 
 class Groups0(Base0):
@@ -136,5 +157,10 @@ if __name__ == '__main__':
     group_students0 = session0.query(Group_Student0).all()
     for group_student0 in group_students0:
         group_student = group_student0.convert()
-        session.add(group_student)    
+        session.add(group_student)
+
+    evaluations0 = session0.query(Evaluation0).all()
+    for evaluation0 in evaluations0:
+        encryptedEvaluation = evaluation0.convert()
+        session.add(encryptedEvaluation)
     session.commit()

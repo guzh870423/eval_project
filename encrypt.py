@@ -40,7 +40,7 @@ class EvalCipher():
         encryptedRank = self.encrypt(str(eval.rank))
         encryptedToken = self.encrypt(str(eval.token))
         encryptedadjective = self.encrypt(str(eval.adjective))
-        encryptedDescription = self.encrypt(eval.description)
+        encryptedDescription = self.encrypt(str(eval.description))
         encryptedEval = EncryptedEvaluation()
         encryptedEval.parse(eval)
         encryptedEval.rank = encryptedRank
