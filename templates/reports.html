@@ -84,7 +84,7 @@
             {% if sortedEvaler[currentWeek-1].get(student.user_name) %}
             {% for evaler in sortedEvaler[currentWeek-1][student.user_name][0] %}
                 <tr>
-                    <td>{{ names[evaler] }}</th>
+                    <td><b>{{ names[evaler] }}</b></th>
                     <td>{{ connection[student.user_name][evaler] }}</th>
                     <td>{{ len(evals[currentWeek-1][evaler]) }}</th>
                     <td>{{ reversedEvals[currentWeek-1][student.user_name][evaler][1] }}</th>

@@ -22,7 +22,7 @@ class Student(Base):
     login_key = Column(VARCHAR(50))
     create_time = Column(TIMESTAMP, nullable=False, server_default=func.now())
     alias_name = Column(VARCHAR(11))
-    is_active = Column(Integer, nullable=False, default=1)
+    is_active = Column(Integer, server_default='1')
     @property
     def serialize(self):
         """Return object data in easily serializeable format"""
@@ -38,7 +38,7 @@ class Student(Base):
 class Semester(Base):  
     __tablename__ = 'semester'
     __table_args__ = (
-            UniqueConstraint('year', 'season'),
+            UniqueConstraint('year', 'season', 'course_no'),
             )
     year = Column(Integer, nullable=False)
     season = Column(VARCHAR(11), nullable=False)
@@ -202,7 +202,7 @@ class Group_Student(Base):
     __tablename__ = 'group_student'
     group_id = Column(Integer, ForeignKey('groups.id', onupdate="CASCADE", ondelete="CASCADE"), primary_key=True)
     student_id = Column(VARCHAR(10), ForeignKey('student.user_name', onupdate="CASCADE", ondelete="CASCADE"), primary_key=True)
-    is_manager = Column(Integer, nullable=False)
+    is_manager = Column(Integer, nullable=False, server_default='0')
     student = relationship(Student)
     groups = relationship(Groups)
     @property

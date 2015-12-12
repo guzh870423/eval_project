@@ -56,7 +56,8 @@ class Student0(Base0):
         student.first_name = self.FIRST_NAME
         student.last_name = self.LAST_NAME
         student.email = self.EMAIL
-        semester = session0.query(Semester0).filter_by(id=self.SEMESTER_ID).first()
+        student.create_time = self.CREATE_TIME
+        semester = session.query(Semester).filter_by(id=self.SEMESTER_ID).first()
         enrollment = Enrollment(student=student, semester=semester)
         return student, enrollment
     
@@ -83,23 +84,57 @@ class Groups0(Base0):
     SEMESTER_ID = Column(Integer, ForeignKey('SEMESTER.ID', onupdate="CASCADE", ondelete="CASCADE"))
     WEEK = Column(Integer, nullable=False)
     ID = Column(Integer, primary_key=True, autoincrement=True)
-    name =  Column(VARCHAR(50))
-    assignment_name = Column(VARCHAR(50))
+    NAME =  Column(VARCHAR(50))
     SEMESTER = relationship(Semester0)
-    create_time = Column(TIMESTAMP, nullable=False, server_default=func.now())
+    CREATE_TIME = Column(TIMESTAMP, nullable=False, server_default=func.now())
+    def convert(self):
+        group = Groups();
+        group.semester_id = self.SEMESTER_ID
+        group.week = self.WEEK
+        group.id = self.ID
+        group.name = self.NAME
+        group.create_time = self.CREATE_TIME
+        semester = session.query(Semester).filter_by(id=self.SEMESTER_ID).first()
+        group.semester = semester
+        return group
 
     
 class Group_Student0(Base0):
     __tablename__ = 'GROUP_STUDENT'
-    group_id = Column(Integer, ForeignKey('GROUPS.ID', onupdate="CASCADE", ondelete="CASCADE"), primary_key=True)
-    student_id = Column(VARCHAR(10), ForeignKey('STUDENT.USER_NAME', onupdate="CASCADE", ondelete="CASCADE"), primary_key=True)
+    GROUP_ID = Column(Integer, ForeignKey('GROUPS.ID', onupdate="CASCADE", ondelete="CASCADE"), primary_key=True)
+    STUDENT_ID = Column(VARCHAR(10), ForeignKey('STUDENT.USER_NAME', onupdate="CASCADE", ondelete="CASCADE"), primary_key=True)
     STUDENT = relationship(Student0)
     GROUPS = relationship(Groups0)
+    
+    def convert(self):
+        group_student = Group_Student()
+        group_student.group_id = self.GROUP_ID
+        group_student.student_id = self.STUDENT_ID
+        groups = session.query(Groups).filter_by(id=self.GROUP_ID).first()
+        student = session.query(Student).filter_by(user_name=self.STUDENT_ID).first()
+        group_student.student = student
+        group_student.groups = groups
+        return group_student
+        
 
 if __name__ == '__main__':
     semesters0 = session0.query(Semester0).all();
     for semester0 in semesters0:
         semester = semester0.convert()
         session.add(semester)
+    students0 = session0.query(Student0).all()
+    for student0 in students0:
+        student, enrollment = student0.convert()
+        session.add(student)
+        session.add(enrollment)
         
+    groups0 = session0.query(Groups0).all()
+    for group0 in groups0:
+        group = group0.convert()
+        session.add(group)
+        
+    group_students0 = session0.query(Group_Student0).all()
+    for group_student0 in group_students0:
+        group_student = group_student0.convert()
+        session.add(group_student)    
     session.commit()
