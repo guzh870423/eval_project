@@ -13,6 +13,7 @@ import copy
 import operator
 
 round_digits = 3
+tokenRange = 100
 parser = SafeConfigParser()
 parser.read('config.ini')
 #username = parser.get('login', 'username')
@@ -217,8 +218,9 @@ def queryEvalByWeek(semester_id, week, students, connection):
                 reversedEvalsOneWeek[evalee] = {}
             reversedEvalsOneWeek[evalee][evaler] = []
             reversedEvalsOneWeek[evalee][evaler].append(eval)
-            reversedEvalsOneWeek[evalee][evaler].append(round(float(eval.rank) / len(evalsOneWeek[evaler]), round_digits))
-            reversedEvalsOneWeek[evalee][evaler].append(eval.token * len(evalsOneWeek[evaler]))
+            numberOfEval = len(evalsOneWeek[evaler])
+            reversedEvalsOneWeek[evalee][evaler].append(round((eval.rank - (numberOfEval + 1.0) / 2.0 ) / numberOfEval, round_digits))
+            reversedEvalsOneWeek[evalee][evaler].append(eval.token * len(evalsOneWeek[evaler]) - tokenRange / 2)
     
     #sort evaler for each evalee
     for evalee in reversedEvalsOneWeek:

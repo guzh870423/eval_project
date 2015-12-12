@@ -28,8 +28,8 @@
     <div class ="col-md-6 col-md-push-3">
     <table class="table table-hover">
         <caption>
-            normalized rank =  rank / number of reviews given by evaler. Range: (0,1]<br>
-            normalized token = token * number of reviews given by evaler.
+            normalized rank =  (rank - (No. of reviews+1)/2)/ No. of reviews. Range: (-0.5,0.5)<br>
+            normalized token = token * number of reviews - 50.
         </caption>
         <tr>
             <th>student</th>
