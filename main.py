@@ -11,9 +11,11 @@ from sqlalchemy.orm import aliased
 from sqlalchemy.sql import exists
 import copy
 import operator
+import os
 
 round_digits = 3
 tokenRange = 100
+chart_folder = 'templates/charts/'
 parser = SafeConfigParser()
 parser.read('config.ini')
 #username = parser.get('login', 'username')
@@ -275,6 +277,8 @@ def queryEvals(currentWeek, semester_id, students, connection):
     return evals, reversedEvals, sortedEvaler, averageRank, averageToken
 
 def compareChart(currentWeek, students, names, averageRank):
+    if not os.path.exists(chart_folder):
+        os.makedirs(chart_folder)
     options = copy.deepcopy(raw_options)
     options['title']['text'] = 'Normalized Rank Comparison Chart'
     options['yAxis']['title']['text'] = 'Normalized Rank'
@@ -296,9 +300,11 @@ def compareChart(currentWeek, students, names, averageRank):
         series.append({'name': name, 'data': data})
         chart.add_data_set(data, 'spline', name, marker={'enabled': True})
     #options['series'] = series
-    chart.save_file('templates/charts/compare')
+    chart.save_file(chart_folder + 'compare')
 
 def generateCharts(currentWeek, students, names, averageRank, averageToken):
+    if not os.path.exists(chart_folder):
+        os.makedirs(chart_folder)
     options = copy.deepcopy(raw_options)
     options['yAxis'] = [{
         'reversed': True,
@@ -345,7 +351,7 @@ def generateCharts(currentWeek, students, names, averageRank, averageToken):
                 token_data.append(point)
         chart.add_data_set(rank_data, 'spline', 'Normalized Rank', marker={'enabled': True})
         chart.add_data_set(token_data, 'spline', 'Normalized Token', marker={'enabled': True}, yAxis=1)
-        chart.save_file('templates/charts/' + student.user_name)
+        chart.save_file(chart_folder + student.user_name)
 
 def mapNames(students):
     names = {}
