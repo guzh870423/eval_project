@@ -7,7 +7,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.sql import func
 from ConfigParser import SafeConfigParser
 from flask.ext.wtf import Form
-from wtforms import IntegerField, TextField, validators, FieldList, FormField, TextAreaField, HiddenField
+from wtforms import IntegerField, TextField, validators, FieldList, FormField, TextAreaField, HiddenField, RadioField
 from wtforms.validators import Required, Length, Optional
 from wtforms import Form as WTForm
 
@@ -213,6 +213,18 @@ class Group_Student(Base):
             'group_id': self.group_id,
         }
 
+class ManagerEvalForm(Form):
+    approachable = RadioField('Approachable', choices=[('1','1'),('2','2'),('3','3'),('4','4'),('5','5')] ,validators=[Required()])
+    communication = RadioField('Communication', validators=[Required()])
+    client_interaction = RadioField('Client Interaction', validators=[Required()])
+    decision_making = RadioField('Decision Making', validators=[Required()])
+    resource_utilization = RadioField('Resource Utilization', validators=[Required()])
+    follow_up_to_completion = RadioField('Follow up to completion', validators=[Required()])
+    task_delegation_and_ownership = RadioField(u'Task Delegation & Ownership', validators=[Required()])
+    encourage_team_development = RadioField('Encourage Team Development', validators=[Required()])
+    realistic_expectation = RadioField('Realistic Expectation', validators=[Required()])
+    performance_under_stress = RadioField('Performance Under Stress', validators=[Required()])
+    
 class EvalForm(WTForm):
     evaler_id = HiddenField('evaler_id', validators=[Required()])
     evalee_id = HiddenField('evalee_id', validators=[Required()])
@@ -221,7 +233,7 @@ class EvalForm(WTForm):
     tokens = IntegerField(u'Tokens', validators=[Required()])
     adjective = TextField('Adjective', validators=[Required()])
     description = TextAreaField('Description', validators=[Required()])
-
+    
 class EvalListForm(Form):
     evaluations = FieldList(FormField(EvalForm), validators=[Required()])
 

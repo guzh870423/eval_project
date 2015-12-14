@@ -64,3 +64,10 @@ label.control-label {
   color: red;
   font-weight: lighter; 
 }
+
+.manager-eval-heading{
+  text-align: left;
+  font-size: 20px;
+  font-weight: bold;
+  color: #104578;
+}
