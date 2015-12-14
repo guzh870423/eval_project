@@ -60,3 +60,7 @@ label.control-label {
   float: right;
   padding-right: 15px;
 }
+.validation-error-message{
+  color: red;
+  font-weight: lighter; 
+}

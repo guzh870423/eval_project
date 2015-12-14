@@ -41,24 +41,27 @@ def list_all():
      
    app_user = session['app_user']
    if request.method == 'POST':
-        form = EvalListForm(request.form)
-        evals = []
-        evaler = dbSession.query(Student).filter_by(user_name=form.evaluations[0]['evaler_id'].data).first()
-        semester = dbSession.query(Semester).filter_by(year=2015, season='Fall', course_no='P532').first()
-        for eval in form.evaluations:
-            evalee = dbSession.query(Student).filter_by(user_name=eval['evalee_id'].data).first()
-            evaluation = Evaluation(evaler=evaler, evalee=evalee, week=eval['week'].data, rank=eval['rank'].data, token=eval['tokens'].data, description=eval['description'].data, adjective=eval['adjective'].data, semester=semester)
-            evals.append(evaluation)
-        
-        key = 'keyskeyskeyskeys'
-        evalCipher = EvalCipher(key)
+        form = EvalListForm()
+        if form.validate_on_submit():
+            evals = []
+            evaler = dbSession.query(Student).filter_by(user_name=form.evaluations[0]['evaler_id'].data).first()
+            semester = dbSession.query(Semester).filter_by(year=2015, season='Fall', course_no='P532').first()
+            for eval in form.evaluations:
+                evalee = dbSession.query(Student).filter_by(user_name=eval['evalee_id'].data).first()
+                evaluation = Evaluation(evaler=evaler, evalee=evalee, week=eval['week'].data, rank=eval['rank'].data, token=eval['tokens'].data, description=eval['description'].data, adjective=eval['adjective'].data, semester=semester)
+                evals.append(evaluation)
+            
+            key = 'keyskeyskeyskeys'
+            evalCipher = EvalCipher(key)
 
-        for e in evals:
-            encryptedEval = evalCipher.encryptEval(e)
-            dbSession.add(encryptedEval)
-        dbSession.commit()
-        
-        return render_template('eval-success.html', week=form.evaluations[0]['week'].data)
+            for e in evals:
+                encryptedEval = evalCipher.encryptEval(e)
+                dbSession.add(encryptedEval)
+            dbSession.commit()
+            
+            return render_template('eval-success.html', week=form.evaluations[0]['week'].data)
+        else:
+            return render_template('eval.html',form = form)             
 
    max_week = dbSession.query(func.max(Groups.week).label('maxweek'))
    
