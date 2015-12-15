@@ -18,6 +18,7 @@
     <a class = 'logout-link' href='{{url_for('logout')}}'>Logout</a>
     </div>
 	<form id="eval-form" class='form-horizontal' role='form' method='post' action=''>
+    {{ form.hidden_tag() }}
 	{% for eval in form.evaluations %}
 	<div style='display:none;'>{{eval['evaler_id']}},{{eval['evalee_id']}},{{eval['week']}}</div>
 	<div class='container'>
@@ -33,6 +34,7 @@
                 <div class='form-group internal'>
 				{{eval['rank'](class='form-control col-md-8',  placeholder='Rank')}}
                 </div>
+                <div class='validation-error-message'>{{eval['rank'].errors[0] }}</div>
               </div>              
             </div>
 			</div>
@@ -42,7 +44,8 @@
               <div class='col-md-3'>
                 <div class='form-group internal'>
 				{{eval['tokens'](class='form-control col-md-8',  placeholder='Tokens', onfocus='showTokenSum()', onblur='hideTokenSum()')}}                  
-                </div>				
+                </div>	
+                <div class='validation-error-message'>{{eval['tokens'].errors[0] }}</div>    
               </div>  
 			  <label class='form-message' id='remaining-tokens'/>			  
             </div>
@@ -54,6 +57,7 @@
 				  <div class='form-group internal'>
 				    {{eval['adjective'](class='form-control', placeholder='Adjective')}}  
 				  </div>
+                  <div class='validation-error-message'>{{eval['adjective'].errors[0] }}</div>
                 </div>
             </div>
           </div>
@@ -62,6 +66,7 @@
             <div class='col-md-6'>
 			{{eval['description'](class='form-control col-md-8', placeholder='Additional comments')}} 
             </div>
+            <div class='validation-error-message'>{{eval['description'].errors[0]}}</div>
           </div>                  
       </div>	  
     </div>	 

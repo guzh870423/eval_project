@@ -1,0 +1,1 @@
+This folder will contain dynamically generated chart files. PLEASE do not delete it.
