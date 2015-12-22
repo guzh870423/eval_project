@@ -13,10 +13,15 @@ from encrypt import EvalCipher
 course_no = 'P532'
 parser = SafeConfigParser()
 parser.read('config.ini')
+username = parser.get('login', 'username')
+password = parser.get('login', 'password')
+schema = parser.get('login', 'schema')
+host = parser.get('login', 'host')
+port = parser.get('login', 'port')
 key = parser.get('security', 'key')
 evalCipher = EvalCipher(key)
 
-engine = create_engine('mysql://root:pass123@localhost:3306/eval') 
+engine = create_engine('mysql://' + username + ':' + password + '@' + host +':' + port + '/' + schema) 
 Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
