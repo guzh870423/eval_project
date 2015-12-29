@@ -1,7 +1,7 @@
 from flask import Flask, flash, render_template, url_for, request, redirect, session
 from sqlalchemy import create_engine, distinct
 from sqlalchemy.orm import sessionmaker
-from database_setup import Student, Base, Groups, Semester, Group_Student, Enrollment, Evaluation, EncryptedEvaluation, EvalForm, EvalListForm
+from database_setup import Student, Base, Groups, Semester, Group_Student, Enrollment, Evaluation, EncryptedEvaluation, EvalForm, EvalListForm, Manager_Eval
 from ConfigParser import SafeConfigParser
 from encrypt import EvalCipher
 from highcharts import Highchart
@@ -43,17 +43,35 @@ def list_all():
    if request.method == 'POST':
         form = EvalListForm()
         if form.validate_on_submit():
+            key = 'keyskeyskeyskeys'
+            evalCipher = EvalCipher(key)
+
             evals = []
             evaler = dbSession.query(Student).filter_by(user_name=form.evaluations[0]['evaler_id'].data).first()
             semester = dbSession.query(Semester).filter_by(year=2015, season='Fall', course_no='P532').first()
             for eval in form.evaluations:
                 evalee = dbSession.query(Student).filter_by(user_name=eval['evalee_id'].data).first()
-                evaluation = Evaluation(evaler=evaler, evalee=evalee, week=eval['week'].data, rank=eval['rank'].data, token=eval['tokens'].data, description=eval['description'].data, adjective=eval['adjective'].data, semester=semester)
+                
+                encryptedManagerEval = None
+                if eval['is_manager'].data == 1:
+                    managerEval = Manager_Eval(approachable_attitude = eval['managerEval']['approachable'].data,
+                                team_communication = eval['managerEval']['communication'].data,
+                                client_interaction = eval['managerEval']['client_interaction'].data,
+                                decision_making = eval['managerEval']['decision_making'].data,
+                                resource_utilization = eval['managerEval']['resource_utilization'].data,
+                                follow_up_to_completion = eval['managerEval']['follow_up_to_completion'].data,
+                                task_delegation_and_ownership = eval['managerEval']['task_delegation_and_ownership'].data,
+                                encourage_team_development = eval['managerEval']['encourage_team_development'].data,
+                                realistic_expectation = eval['managerEval']['realistic_expectation'].data,
+                                performance_under_stress = eval['managerEval']['performance_under_stress'].data,
+                                mgr_description = 'None')
+                                        
+                    encryptedManagerEval = evalCipher.encryptManagerEval(managerEval)                    
+                    dbSession.add(encryptedManagerEval)                    
+                    
+                evaluation = Evaluation(evaler=evaler, evalee=evalee, week=eval['week'].data, rank=eval['rank'].data, token=eval['tokens'].data, description=eval['description'].data, adjective=eval['adjective'].data, encryptedManagerEval=encryptedManagerEval, semester=semester)
                 evals.append(evaluation)
-            
-            key = 'keyskeyskeyskeys'
-            evalCipher = EvalCipher(key)
-
+                
             for e in evals:
                 encryptedEval = evalCipher.encryptEval(e)
                 dbSession.add(encryptedEval)
@@ -64,7 +82,11 @@ def list_all():
             return render_template('eval.html',form = form)             
 
    max_week = dbSession.query(func.max(Groups.week).label('maxweek'))
+   number_of_evaluations_submitted = dbSession.query(EncryptedEvaluation).filter(EncryptedEvaluation.week == max_week, EncryptedEvaluation.evaler_id == app_user).count()
    
+   if number_of_evaluations_submitted > 0:
+        return render_template('resubmitError.html', week=max_week.scalar())
+                
    evaler = aliased(Group_Student)
    evalee = aliased(Group_Student)
 
@@ -74,7 +96,10 @@ def list_all():
 
    current_evals = dbSession.query(sub_groups.c.week.label('WEEK'), sub_student_evals.c.EVALER_ID, sub_student_evals.c.EVALEE_ID).filter(sub_groups.c.week >= sub_student_evals.c.week, sub_groups.c.student_id == sub_student_evals.c.EVALER_ID).group_by(sub_groups.c.week.label('WEEK'), sub_student_evals.c.EVALER_ID, sub_student_evals.c.EVALEE_ID).order_by(sub_groups.c.week, sub_student_evals.c.EVALER_ID).subquery()
    
-   form_evals = dbSession.query(current_evals.c.WEEK, current_evals.c.EVALEE_ID, Student.first_name, Student.last_name).join(Student, current_evals.c.EVALEE_ID==Student.user_name).order_by(current_evals.c.EVALEE_ID).all()
+   max_week_group_ids = dbSession.query(Groups.id).filter(Groups.week==max_week).subquery()
+   current_managers = dbSession.query(Group_Student.student_id, Group_Student.is_manager).filter(Group_Student.group_id.in_(max_week_group_ids), Group_Student.is_manager==1).subquery()
+   
+   form_evals = dbSession.query(current_evals.c.WEEK, current_evals.c.EVALEE_ID, Student.first_name, Student.last_name, current_managers.c.is_manager).join(Student, current_evals.c.EVALEE_ID==Student.user_name).outerjoin(current_managers, current_evals.c.EVALEE_ID==current_managers.c.student_id).order_by(current_evals.c.EVALEE_ID).all()
    
    evalData = {'evaluations': form_evals}
    form = EvalListForm(data=MultiDict(evalData))
@@ -83,6 +108,7 @@ def list_all():
       y.evalee_id.data = x.EVALEE_ID
       y.evaler_id.data = app_user
       y.week.data = x.WEEK
+      y.is_manager.data = x.is_manager
 
    return render_template(
        'eval.html',
@@ -114,4 +140,4 @@ def logout():
 if __name__ == '__main__':
     app.debug = True
     app.secret_key = 'p532keyconfidential'
-    app.run(host='0.0.0.0', port=8080)
+    app.run(host='0.0.0.0', port=8085)

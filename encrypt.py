@@ -4,7 +4,7 @@
 from Crypto.Cipher import AES
 from Crypto import Random
 from binascii import b2a_hex, a2b_hex
-from database_setup import Student, Base, Groups, Semester, Group_Student, Enrollment, Evaluation, EncryptedEvaluation
+from database_setup import Student, Base, Groups, Semester, Group_Student, Enrollment, Evaluation, EncryptedEvaluation, EncryptedManagerEval
  
 class EvalCipher():
     #iv = Random.new().read(AES.block_size)
@@ -61,6 +61,34 @@ class EvalCipher():
         eval.adjective = adjective
         eval.description = description
         return eval
+        
+    def encryptManagerEval(self, managerEval):
+        encryptedApproachableAttitude = self.encrypt(str(managerEval.approachable_attitude))
+        encryptedTeamCommunication = self.encrypt(str(managerEval.team_communication))
+        encryptedClientInteraction = self.encrypt(str(managerEval.client_interaction))
+        encryptedDecisionMaking = self.encrypt(str(managerEval.decision_making))
+        encryptedResourceUtilization = self.encrypt(str(managerEval.resource_utilization))
+        encryptedFollowUpToCompletion = self.encrypt(str(managerEval.follow_up_to_completion))
+        encryptedTaskDelegationAndOwnership = self.encrypt(str(managerEval.task_delegation_and_ownership))
+        encryptedEncourageTeamDevelopment = self.encrypt(str(managerEval.encourage_team_development))
+        encryptedRealisticExpectation = self.encrypt(str(managerEval.realistic_expectation))
+        encryptedPerformanceUnderStress = self.encrypt(str(managerEval.performance_under_stress))
+        encryptedDescription = self.encrypt(str(managerEval.mgr_description))
+        
+        encryptedManagerEval = EncryptedManagerEval()
+        encryptedManagerEval.parse(managerEval)
+        encryptedManagerEval.approachable_attitude = encryptedApproachableAttitude
+        encryptedManagerEval.team_communication = encryptedTeamCommunication
+        encryptedManagerEval.client_interaction = encryptedClientInteraction
+        encryptedManagerEval.decision_making = encryptedDecisionMaking
+        encryptedManagerEval.resource_utilization = encryptedResourceUtilization
+        encryptedManagerEval.follow_up_to_completion = encryptedFollowUpToCompletion
+        encryptedManagerEval.task_delegation_and_ownership = encryptedTaskDelegationAndOwnership
+        encryptedManagerEval.encourage_team_development = encryptedEncourageTeamDevelopment
+        encryptedManagerEval.realistic_expectation = encryptedRealisticExpectation
+        encryptedManagerEval.performance_under_stress = encryptedPerformanceUnderStress
+        encryptedManagerEval.mgr_description = encryptedDescription
+        return encryptedManagerEval    
         
 # a sample to test EvalCipher 
 if __name__ == '__main__':

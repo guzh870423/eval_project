@@ -7,7 +7,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.sql import func
 from ConfigParser import SafeConfigParser
 from flask.ext.wtf import Form
-from wtforms import IntegerField, TextField, validators, FieldList, FormField, TextAreaField, HiddenField, RadioField
+from wtforms import IntegerField, TextField, validators, FieldList, FormField, TextAreaField, HiddenField, RadioField, SelectField
 from wtforms.validators import Required, Length, Optional
 from wtforms import Form as WTForm
 
@@ -71,6 +71,47 @@ class Manager_Eval(Base):
     performance_under_stress = Column(Integer, nullable=False)
     mgr_description = Column(String(4096), nullable=False)
     
+    def parse(self, encryptedManagerEval):
+        self.approachable_attitude = encryptedManagerEval.approachable_attitude
+        self.team_communication = encryptedManagerEval.team_communication
+        self.client_interaction = encryptedManagerEval.client_interaction
+        self.decision_making = encryptedManagerEval.decision_making
+        self.resource_utilization = encryptedManagerEval.resource_utilization
+        self.follow_up_to_completion = encryptedManagerEval.follow_up_to_completion
+        self.task_delegation_and_ownership = encryptedManagerEval.task_delegation_and_ownership
+        self.encourage_team_development = encryptedManagerEval.encourage_team_development
+        self.realistic_expectation = encryptedManagerEval.realistic_expectation
+        self.performance_under_stress = encryptedManagerEval.performance_under_stress
+        self.mgr_description = encryptedManagerEval.mgr_description
+        
+class EncryptedManagerEval(Base):
+    __tablename__ = 'encrypted_manager_eval'
+    manager_id = Column(Integer, primary_key=True, autoincrement=True)
+    approachable_attitude = Column(String(128), nullable=False)
+    team_communication = Column(String(128), nullable=False)
+    client_interaction = Column(String(128), nullable=False)
+    decision_making = Column(String(128), nullable=False)
+    resource_utilization = Column(String(128), nullable=False)
+    follow_up_to_completion = Column(String(128), nullable=False)
+    task_delegation_and_ownership = Column(String(128), nullable=False)
+    encourage_team_development = Column(String(128), nullable=False)
+    realistic_expectation = Column(String(128), nullable=False)
+    performance_under_stress = Column(String(128), nullable=False)
+    mgr_description = Column(String(4096), nullable=False)
+    
+    def parse(self, rawManagerEval):
+        self.approachable_attitude = rawManagerEval.approachable_attitude
+        self.team_communication = rawManagerEval.team_communication
+        self.client_interaction = rawManagerEval.client_interaction
+        self.decision_making = rawManagerEval.decision_making
+        self.resource_utilization = rawManagerEval.resource_utilization
+        self.follow_up_to_completion = rawManagerEval.follow_up_to_completion
+        self.task_delegation_and_ownership = rawManagerEval.task_delegation_and_ownership
+        self.encourage_team_development = rawManagerEval.encourage_team_development
+        self.realistic_expectation = rawManagerEval.realistic_expectation
+        self.performance_under_stress = rawManagerEval.performance_under_stress
+        self.mgr_description = rawManagerEval.mgr_description
+        
 class Evaluation(Base):
     __tablename__ = 'evaluation'
 
@@ -82,12 +123,12 @@ class Evaluation(Base):
     description = Column(String(4096), nullable=False)
     submission_time = Column(TIMESTAMP, nullable=False, server_default=func.now(), onupdate=func.current_timestamp())
     adjective = Column(String(128), nullable=False)
-    manager_id =  Column(Integer, ForeignKey('manager_eval.manager_id', onupdate="CASCADE", ondelete="CASCADE"))
+    manager_id =  Column(Integer, ForeignKey(EncryptedManagerEval.manager_id, onupdate="CASCADE", ondelete="CASCADE"))
     semester_id = Column(Integer, ForeignKey('semester.id', onupdate="CASCADE", ondelete="CASCADE"), primary_key=True)
     evaler = relationship(Student, foreign_keys='Evaluation.evaler_id')
     evalee = relationship(Student, foreign_keys='Evaluation.evalee_id')
     semester = relationship(Semester)
-    manager_eval = relationship(Manager_Eval)
+    encryptedManagerEval = relationship(EncryptedManagerEval)
     
     def parse(self, encryptedEval):
         self.evaler_id = encryptedEval.evaler_id
@@ -103,6 +144,7 @@ class Evaluation(Base):
         self.evaler = encryptedEval.evaler
         self.evalee = encryptedEval.evalee
         self.semester = encryptedEval.semester
+        self.encryptedManagerEval = encryptedEval.encryptedManagerEval
         
     @property
     def serialize(self):
@@ -128,12 +170,12 @@ class EncryptedEvaluation(Base):
     description = Column(String(4096), nullable=False)
     submission_time = Column(TIMESTAMP, nullable=False, server_default=func.now(), onupdate=func.current_timestamp())
     adjective = Column(String(128), nullable=False)
-    manager_id =  Column(Integer, ForeignKey('manager_eval.manager_id', onupdate="CASCADE", ondelete="CASCADE"))
+    manager_id =  Column(Integer, ForeignKey(EncryptedManagerEval.manager_id, onupdate="CASCADE", ondelete="CASCADE"))
     semester_id = Column(Integer, ForeignKey('semester.id', onupdate="CASCADE", ondelete="CASCADE"), primary_key=True)
     evaler = relationship(Student, foreign_keys='EncryptedEvaluation.evaler_id')
     evalee = relationship(Student, foreign_keys='EncryptedEvaluation.evalee_id')
     semester = relationship(Semester)
-    manager_eval = relationship(Manager_Eval)
+    encryptedManagerEval = relationship(EncryptedManagerEval)
     
     def parse(self, rawEval):
         self.evaler_id = rawEval.evaler_id
@@ -149,6 +191,7 @@ class EncryptedEvaluation(Base):
         self.evaler = rawEval.evaler
         self.evalee = rawEval.evalee
         self.semester = rawEval.semester
+        self.encryptedManagerEval = rawEval.encryptedManagerEval
         
     @property
     def serialize(self):
@@ -213,17 +256,18 @@ class Group_Student(Base):
             'group_id': self.group_id,
         }
 
-class ManagerEvalForm(Form):
-    approachable = RadioField('Approachable', choices=[('1','1'),('2','2'),('3','3'),('4','4'),('5','5')] ,validators=[Required()])
-    communication = RadioField('Communication', validators=[Required()])
-    client_interaction = RadioField('Client Interaction', validators=[Required()])
-    decision_making = RadioField('Decision Making', validators=[Required()])
-    resource_utilization = RadioField('Resource Utilization', validators=[Required()])
-    follow_up_to_completion = RadioField('Follow up to completion', validators=[Required()])
-    task_delegation_and_ownership = RadioField(u'Task Delegation & Ownership', validators=[Required()])
-    encourage_team_development = RadioField('Encourage Team Development', validators=[Required()])
-    realistic_expectation = RadioField('Realistic Expectation', validators=[Required()])
-    performance_under_stress = RadioField('Performance Under Stress', validators=[Required()])
+class ManagerEvalForm(WTForm):
+    choices = [('1','1'),('2','2'),('3','3'),('4','4'),('5','5')]
+    approachable = RadioField('Approachable', choices=choices, validators=[Optional()])
+    communication = RadioField('Communication', choices=choices, validators=[Optional()])
+    client_interaction = RadioField('Client Interaction', choices=choices, validators=[Optional()])
+    decision_making = RadioField('Decision Making', choices=choices, validators=[Optional()])
+    resource_utilization = RadioField('Resource Utilization', choices=choices, validators=[Optional()])
+    follow_up_to_completion = RadioField('Follow up to completion', choices=choices, validators=[Optional()])
+    task_delegation_and_ownership = RadioField(u'Task Delegation & Ownership', choices=choices, validators=[Optional()])
+    encourage_team_development = RadioField('Encourage Team Development', choices=choices, validators=[Optional()])
+    realistic_expectation = RadioField('Realistic Expectation', choices=choices, validators=[Optional()])
+    performance_under_stress = RadioField('Performance Under Stress', choices=choices, validators=[Optional()])
     
 class EvalForm(WTForm):
     evaler_id = HiddenField('evaler_id', validators=[Required()])
@@ -233,9 +277,12 @@ class EvalForm(WTForm):
     tokens = IntegerField(u'Tokens', validators=[Required()])
     adjective = TextField('Adjective', validators=[Required()])
     description = TextAreaField('Description', validators=[Required()])
+    is_manager = IntegerField('is_manager', validators=[Optional()])
+    managerEval = FormField(ManagerEvalForm)
     
+        
 class EvalListForm(Form):
-    evaluations = FieldList(FormField(EvalForm), validators=[Required()])
+    evaluations = FieldList(FormField(EvalForm))
 
 if __name__ == '__main__':    
     parser = SafeConfigParser()

@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <title>Evaluation Detail</title>  
   <link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/manager-stylesheet.css') }}">
   <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel='stylesheet' type='text/css'>
   <script src='//cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js' type='text/javascript'></script>
  <script src='//cdn.jsdelivr.net/jquery.validation/1.14.0/jquery.validate.js' type='text/javascript'></script>
@@ -20,7 +21,7 @@
 	<form id="eval-form" class='form-horizontal' role='form' method='post' action=''>
     {{ form.hidden_tag() }}
 	{% for eval in form.evaluations %}
-	<div style='display:none;'>{{eval['evaler_id']}},{{eval['evalee_id']}},{{eval['week']}}</div>
+	<div style='display:none;'>{{eval['evaler_id']}},{{eval['evalee_id']}},{{eval['week']}},{{eval['is_manager']}}</div>
 	<div class='container'>
     <div class='panel panel-primary dialog-panel'>
       <div class='panel-heading'>
@@ -67,9 +68,31 @@
 			{{eval['description'](class='form-control col-md-8', placeholder='Additional comments')}} 
             </div>
             <div class='validation-error-message'>{{eval['description'].errors[0]}}</div>
-          </div>                  
-      </div>	  
-    </div>	 
+          </div>
+      
+    {% if eval['is_manager'].data == 1 %}  
+        <div class='manager-panel'>
+        <div class='manager-form-header'>Manager Evaluation</div>
+        <div class='questions-message'>Rate your manager on following qualities (5 being highest)</div>
+            <table> 
+            {% for managerEval in eval['managerEval'] %}                
+                <tr>
+                    <td>
+                        {{managerEval.label}}
+                    </td>
+                    <td>
+                        {% for element in managerEval %}
+                            {{element}}
+                        {% endfor %}
+                    </td>        
+                    <div class='validation-error-message'>{{managerEval.errors[0] }}</div>    
+                </tr>                
+            {% endfor %}   
+            </table>        
+        </div>
+    {% endif %}
+    </div>
+    </div>	
     </div>
     {% endfor %}
     <div>
