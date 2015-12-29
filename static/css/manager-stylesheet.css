@@ -1,0 +1,19 @@
+.manager-form-header{
+   text-align: center;
+   font-size: 1.5em;
+   color: #0399DB;
+}
+
+.questions-message{
+   padding-bottom: 10px;
+}
+
+.manager-panel{
+   border-radius: 5px;
+   border: 2px solid #DACCCB;
+   padding: 20px;    
+}
+
+td{
+  width: 80%;
+}
