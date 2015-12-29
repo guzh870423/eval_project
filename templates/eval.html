@@ -20,6 +20,15 @@
     </div>
 	<form id="eval-form" class='form-horizontal' role='form' method='post' action=''>
     {{ form.hidden_tag() }}
+     <div class='flash-error-message'>
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            {% for message in messages %}
+                {{ message | safe }}</br>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+        </div>
 	{% for eval in form.evaluations %}
 	<div style='display:none;'>{{eval['evaler_id']}},{{eval['evalee_id']}},{{eval['week']}},{{eval['is_manager']}}</div>
 	<div class='container'>
@@ -74,7 +83,15 @@
         <div class='manager-panel'>
         <div class='manager-form-header'>Manager Evaluation</div>
         <div class='questions-message'>Rate your manager on following qualities (5 being highest)</div>
-            <table> 
+            <table>
+            <tr>
+                <td></td>
+                <td>
+                <div class='radio-buttons'>
+                <div>1</div><div>2</div><div>3</div><div>4</div><div>5</div>
+                </div>
+                </td>
+            </tr>
             {% for managerEval in eval['managerEval'] %}                
                 <tr>
                     <td>

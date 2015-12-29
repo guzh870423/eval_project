@@ -17,3 +17,13 @@
 td{
   width: 80%;
 }
+
+.radio-buttons{
+    width: 102%;
+}
+
+.radio-buttons > div{
+    display: inline-block;
+    width: 20%;
+    text-align: center;
+}

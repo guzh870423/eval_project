@@ -1,5 +1,6 @@
 import os
 import sys
+from flask import flash
 from sqlalchemy import Column, ForeignKey, Integer, String, VARCHAR, TIMESTAMP, UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
@@ -283,6 +284,34 @@ class EvalForm(WTForm):
         
 class EvalListForm(Form):
     evaluations = FieldList(FormField(EvalForm))
+    error = HiddenField('error', validators=[Optional()])
+    
+    def validate(self):
+        if not Form.validate(self):
+            return False
+            
+        result = True
+        sum_of_tokens = 0
+        ranksArray = []
+        num_of_evals = len(self.evaluations)
+        
+        for field in self.evaluations:
+            sum_of_tokens = sum_of_tokens + field['tokens'].data
+            ranksArray.append(field['rank'].data)
+        
+        if sum_of_tokens != 100:
+            flash('Sum of Tokens should be 100.')
+            result = False
+        
+        ranksArray.sort()
+        if len(ranksArray)!=len(set(ranksArray)):
+            flash('Duplicate ranks are NOT allowed.')
+            result = False
+        if ranksArray[0] != 1 or ranksArray[num_of_evals-1] != num_of_evals:
+            flash('Ranks should be assigned from 1 to N.')
+            result = False
+            
+        return result
 
 if __name__ == '__main__':    
     parser = SafeConfigParser()

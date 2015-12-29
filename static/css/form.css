@@ -71,3 +71,8 @@ label.control-label {
   font-weight: bold;
   color: #104578;
 }
+
+.flash-error-message{
+  color: red;
+  text-align: center;
+}
