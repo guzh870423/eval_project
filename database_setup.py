@@ -20,7 +20,7 @@ class Student(Base):
     first_name = Column(VARCHAR(50), nullable=False)
     last_name = Column(VARCHAR(50), nullable=False)
     email = Column(VARCHAR(50))
-    login_key = Column(VARCHAR(50))
+    login_pwd = Column(VARCHAR(50))
     create_time = Column(TIMESTAMP, nullable=False, server_default=func.now())
     alias_name = Column(VARCHAR(11))
     is_active = Column(Integer, server_default='1')
@@ -33,7 +33,7 @@ class Student(Base):
             'user_name': self.user_name,
             'email': self.email,
             'alias_name': self.alias_name,
-			'login_key': self.login_key
+			'login_pwd': self.login_pwd
         }
         
 class Semester(Base):  

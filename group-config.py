@@ -34,38 +34,44 @@ session = DBSession()
 wb = openpyxl.load_workbook('group-config.xlsx')
 wb.get_sheet_names()
 sheet = wb.get_sheet_by_name('groups')
-print sheet.cell(row=1, column=2).value
 rows = sheet.max_row
 columns = sheet.max_column
-print rows, columns
+print 'Populating configuration data...'
 
-for row in range(2, rows + 1):
-    semester_id = sheet['A' + str(row)].value
-    week = sheet['B' + str(row)].value
-    group_name = sheet['C' + str(row)].value
-    assignment_name = sheet['D' + str(row)].value
-    
-    semester = session.query(Semester).filter_by(id=semester_id).first()
-    group = Groups(semester=semester, week=week, name=group_name, assignment_name=assignment_name)
-    session.add(group)
+try:
+    for row in range(2, rows + 1):
+        semester_id = sheet['A' + str(row)].value
+        week = sheet['B' + str(row)].value
+        group_name = sheet['C' + str(row)].value
+        assignment_name = sheet['D' + str(row)].value
+        
+        semester = session.query(Semester).filter_by(id=semester_id).first()
+        group = Groups(semester=semester, week=week, name=group_name, assignment_name=assignment_name)
+        session.add(group)
 
-session.commit()
+    session.commit()
+except Exception as e:
+    print "Error populating GROUPS table.", str(e)
 
 sheet = wb.get_sheet_by_name('group-student')
 rows = sheet.max_row
 columns = sheet.max_column
 
-for row in range(2, rows + 1):
-    group_name = sheet['A' + str(row)].value
-    student_id = sheet['B' + str(row)].value
-    is_manager = sheet['C' + str(row)].value
-    
-    max_week = session.query(func.max(Groups.week)).scalar()
-    group = session.query(Groups).filter_by(week=max_week, name=group_name).first()
-    student = session.query(Student).filter_by(user_name=student_id).first()
-    group_student = Group_Student(groups=group, student=student, is_manager = is_manager)
-    session.add(group_student)
+try:
+    for row in range(2, rows + 1):
+        group_name = sheet['A' + str(row)].value
+        student_id = sheet['B' + str(row)].value
+        is_manager = sheet['C' + str(row)].value
+        
+        max_week = session.query(func.max(Groups.week)).scalar()
+        group = session.query(Groups).filter_by(week=max_week, name=group_name).first()
+        student = session.query(Student).filter_by(user_name=student_id).first()
+        group_student = Group_Student(groups=group, student=student, is_manager = is_manager)
+        session.add(group_student)
 
-session.commit()
-print "Configuration Data inserted Successfully."
-session.close()
+    session.commit()
+    print "Configuration Data inserted Successfully."
+    session.close()
+except Exception as e:
+    print "Error populating GROUP_STUDENT table.", str(e)
+

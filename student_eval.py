@@ -126,7 +126,7 @@ def login():
             app_user = request.form['username']
             app_user_pwd = request.form['password']
             users = dbSession.query(Student).all()
-            isAuthentic = dbSession.query(exists().where(and_(Student.user_name==app_user, Student.login_key==app_user_pwd))).scalar()
+            isAuthentic = dbSession.query(exists().where(and_(Student.user_name==app_user, Student.login_pwd==app_user_pwd))).scalar()
             
             if isAuthentic != True:
                 error = 'Invalid Credentials. Please try again.'
