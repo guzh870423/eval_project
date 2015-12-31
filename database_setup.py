@@ -8,9 +8,10 @@ from sqlalchemy import create_engine
 from sqlalchemy.sql import func
 from ConfigParser import SafeConfigParser
 from flask.ext.wtf import Form
-from wtforms import IntegerField, TextField, validators, FieldList, FormField, TextAreaField, HiddenField, RadioField, SelectField
+from wtforms import IntegerField, TextField, validators, FieldList, FormField, TextAreaField, HiddenField, RadioField, SelectField, PasswordField
 from wtforms.validators import Required, Length, Optional
 from wtforms import Form as WTForm
+from itsdangerous import TimedJSONWebSignatureSerializer
 
 Base = declarative_base()
 
@@ -35,6 +36,19 @@ class Student(Base):
             'alias_name': self.alias_name,
 			'login_pwd': self.login_pwd
         }
+        
+    def get_token(self, expiration=100):
+        s = TimedJSONWebSignatureSerializer('p532keyconfidential', expiration)
+        return s.dumps(self.user_name).decode('utf-8')
+        
+    @staticmethod
+    def verify_token(token):
+        s = TimedJSONWebSignatureSerializer('p532keyconfidential')
+        try:
+            data = s.loads(token)
+        except:
+            return None
+        return data            
         
 class Semester(Base):  
     __tablename__ = 'semester'
@@ -313,6 +327,14 @@ class EvalListForm(Form):
             
         return result
 
+class ResetPassword(Form):
+    user_name = TextField('User Name', validators=[Required()])
+
+class ResetPasswordSubmit(Form):
+    user_name = HiddenField('user_name')
+    password = PasswordField('Password')
+    confirm = PasswordField('Confirm Password')
+    
 if __name__ == '__main__':    
     parser = SafeConfigParser()
     parser.read('config.ini')

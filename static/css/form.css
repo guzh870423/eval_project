@@ -76,3 +76,10 @@ label.control-label {
   color: red;
   text-align: center;
 }
+
+.reset-form-container{
+    width: 50%;
+}
+body{
+    background: #eaeaea !important;
+}

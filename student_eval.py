@@ -1,7 +1,7 @@
 from flask import Flask, flash, render_template, url_for, request, redirect, session
 from sqlalchemy import create_engine, distinct
 from sqlalchemy.orm import sessionmaker
-from database_setup import Student, Base, Groups, Semester, Group_Student, Enrollment, Evaluation, EncryptedEvaluation, EvalForm, EvalListForm, Manager_Eval
+from database_setup import Student, Base, Groups, Semester, Group_Student, Enrollment, Evaluation, EncryptedEvaluation, EvalForm, EvalListForm, Manager_Eval, ResetPassword, ResetPasswordSubmit
 from ConfigParser import SafeConfigParser
 from encrypt import EvalCipher
 from highcharts import Highchart
@@ -13,6 +13,7 @@ from wtforms.validators import DataRequired
 from wtforms import Form
 from werkzeug.datastructures import MultiDict
 import itertools
+
 
 parser = SafeConfigParser()
 parser.read('config.ini')
@@ -144,9 +145,49 @@ def logout():
     flash('You have been logged out successfully')
     return redirect(url_for('login'))
 
-@app.errorhandler
-def page_not_found(e):
-    return render_template('error.html')
+@app.route('/reset-password', methods=('GET', 'POST',))
+def forgot_password():
+    form = ResetPassword()
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            user_name = form.user_name.data
+            user = dbSession.query(Student).filter_by(user_name=user_name).first()
+            if user:
+                token = user.get_token()
+                print 'here',token                
+    return render_template('reset.html', form=form)
+
+@app.route('/verify-user', methods=('GET', 'POST',))
+def verify_user():
+    if request.method == 'POST':
+        form = ResetPasswordSubmit()
+        if form.validate_on_submit():
+            user_name = form.user_name.data
+            pwd = form.password.data
+            confirm = form.confirm.data
+            if pwd == confirm:
+                student = dbSession.query(Student).filter_by(user_name=user_name).update({Student.login_pwd: pwd})
+                dbSession.commit()
+                return redirect(url_for('reset_password_success'))
+            else:
+                flash('Passwords do not match.')
+    else:
+        form = ResetPasswordSubmit()
+        print 'GHOST'    
+        token = request.args.get('token')
+        print token
+        verified_token = Student.verify_token(token)
+        if verified_token:
+            student = dbSession.query(Student).filter_by(user_name=verified_token).first()
+            if student:
+                form.user_name.data = student.user_name
+        else:
+            return render_template("error.html")     
+    return render_template('reset-pwd.html', form=form)
+    
+@app.route('/password-reset-success', methods=('GET', 'POST',))
+def reset_password_success():
+    return render_template('password-reset-success.html')
     
 if __name__ == '__main__':
     app.debug = True
