@@ -1,3 +1,4 @@
+import os
 from flask import Flask, flash, render_template, url_for, request, redirect, session
 from sqlalchemy import create_engine, distinct
 from sqlalchemy.orm import sessionmaker
@@ -13,27 +14,48 @@ from wtforms.validators import DataRequired
 from wtforms import Form
 from werkzeug.datastructures import MultiDict
 import itertools
-
+import ast
+from flask_mail import Mail, Message
+from itsdangerous import URLSafeSerializer
+import socket
 
 parser = SafeConfigParser()
 parser.read('config.ini')
+
 username = parser.get('login', 'username')
 password = parser.get('login', 'password')
 schema = parser.get('login', 'schema')
 host = parser.get('login', 'host')
 port = parser.get('login', 'port')
 
+key = parser.get('security', 'key')
+
+MAIL_SERVER = parser.get('email', 'MAIL_SERVER')
+MAIL_PORT = parser.get('email', 'MAIL_PORT')
+MAIL_USE_SSL = ast.literal_eval(parser.get('email', 'MAIL_USE_SSL'))
+MAIL_DEFAULT_SENDER = parser.get('email', 'MAIL_DEFAULT_SENDER')
+
+APP_HOST = parser.get('apprun', 'host')
+APP_PORT = parser.get('apprun', 'port')
+
 app = Flask(__name__)
 app.config['CSRF_ENABLED'] = True
-app.config['SECRET_KEY'] = 'p532keyconfidential'
+app.config['SECRET_KEY'] = key
+
+app.config["MAIL_SERVER"] = MAIL_SERVER
+app.config["MAIL_PORT"] = MAIL_PORT
+app.config["MAIL_USE_SSL"] = MAIL_USE_SSL
+app.config["MAIL_DEFAULT_SENDER"] = MAIL_DEFAULT_SENDER
+
+mail = Mail(app)
 
 engine = create_engine('mysql://' + username + ':' + password + '@' + host +':' + port + '/' + schema, pool_recycle=28800) 
 Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 dbSession = DBSession()
 
-key = parser.get('security', 'key')
 evalCipher = EvalCipher(key)
+urlSerializer = URLSafeSerializer(key)
 
 @app.route('/eval', methods=['GET', 'POST'])
 def list_all():
@@ -45,9 +67,6 @@ def list_all():
         if request.method == 'POST':
             form = EvalListForm()
             if form.validate_on_submit():
-                key = 'keyskeyskeyskeys'
-                evalCipher = EvalCipher(key)
-
                 evals = []
                 evaler = dbSession.query(Student).filter_by(user_name=form.evaluations[0]['evaler_id'].data).first()
                 semester = dbSession.query(Semester).filter_by(year=2015, season='Fall', course_no='P532').first()
@@ -154,7 +173,11 @@ def forgot_password():
             user = dbSession.query(Student).filter_by(user_name=user_name).first()
             if user:
                 token = user.get_token()
-                print 'here',token                
+                print app.config
+                url = APP_HOST + ':' + APP_PORT + url_for('verify_user') + '?token=' + token
+                user = urlSerializer.dumps({"user":user.email})
+                url = urlSerializer.dumps({"url":url})
+                return redirect(url_for('mail_sender', user=user, url=url))        
     return render_template('reset.html', form=form)
 
 @app.route('/verify-user', methods=('GET', 'POST',))
@@ -173,10 +196,9 @@ def verify_user():
                 flash('Passwords do not match.')
     else:
         form = ResetPasswordSubmit()
-        print 'GHOST'    
         token = request.args.get('token')
-        print token
         verified_token = Student.verify_token(token)
+        print 'token result = ' + verified_token
         if verified_token:
             student = dbSession.query(Student).filter_by(user_name=verified_token).first()
             if student:
@@ -188,8 +210,27 @@ def verify_user():
 @app.route('/password-reset-success', methods=('GET', 'POST',))
 def reset_password_success():
     return render_template('password-reset-success.html')
-    
+
+@app.route("/send-notification")
+def mail_sender():
+    try:
+        user = urlSerializer.loads(request.args.get('user'))
+        url = urlSerializer.loads(request.args.get('url'))
+        msg = Message("P532/P632 Evaluation Account Password Reset",
+                      html=render_template("email-template.html", reset_url=url['url']),
+                      recipients=[user['user']])
+        
+        mail.send(msg)
+        return redirect(url_for('notification_success'))
+    except Exception as e:
+        print e   
+        return render_template("error.html")     
+                  
+@app.route("/notification-success")
+def notification_success():
+    return render_template('notification-success.html')
+
 if __name__ == '__main__':
     app.debug = True
-    app.secret_key = 'p532keyconfidential'
-    app.run(host='0.0.0.0', port=8085)
+    app.secret_key = key
+    app.run(host=APP_HOST, port=int(APP_PORT))
