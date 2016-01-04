@@ -18,6 +18,8 @@ import ast
 from flask_mail import Mail, Message
 from itsdangerous import URLSafeSerializer
 import socket
+import logging
+from logging.handlers import RotatingFileHandler
 
 parser = SafeConfigParser()
 parser.read('config.ini')
@@ -41,6 +43,8 @@ APP_PORT = parser.get('apprun', 'port')
 CURRENT_SEASON = parser.get('currentsem', 'season') 
 CURRENT_YEAR = int(parser.get('currentsem', 'year'))
 CURRENT_COURSE_NO = parser.get('currentsem', 'course_no') 
+
+LOGGING_LEVEL = parser.get('logs', 'LOGGING_LEVEL')
 
 app = Flask(__name__)
 app.config['CSRF_ENABLED'] = True
@@ -106,6 +110,7 @@ def list_all():
             else:
                 return render_template('eval.html',form = form)             
     except Exception as e:
+            app.logger.error(e)
             return render_template("error.html") 
             
     max_week = dbSession.query(func.max(Groups.week).label('maxweek'))
@@ -158,6 +163,7 @@ def login():
                 session['app_user'] = app_user
                 return redirect(url_for('list_all'))
         except Exception as e:
+            app.logger.error(e)
             return render_template("error.html")         
     return render_template('index.html', error=error)
     
@@ -165,6 +171,7 @@ def login():
 def logout():
     session.pop('app_user')
     dbSession.close()
+    app.logger.info('User has logged out successfully.')
     flash('You have been logged out successfully')
     return redirect(url_for('login'))
 
@@ -202,17 +209,18 @@ def verify_user():
         form = ResetPasswordSubmit()
         token = request.args.get('token')
         verified_token = Student.verify_token(token)
-        print 'token result = ' + verified_token
         if verified_token:
             student = dbSession.query(Student).filter_by(user_name=verified_token).first()
             if student:
                 form.user_name.data = student.user_name
         else:
+            app.logger.warning('Token verification failed while resetting the password.')
             return render_template("error.html")     
     return render_template('reset-pwd.html', form=form)
     
 @app.route('/password-reset-success', methods=('GET', 'POST',))
 def reset_password_success():
+    app.logger.info('Login password has been reset successfully.')
     return render_template('password-reset-success.html')
 
 @app.route("/send-notification")
@@ -227,14 +235,25 @@ def mail_sender():
         mail.send(msg)
         return redirect(url_for('notification_success'))
     except Exception as e:
-        print e   
+        app.logger.error(e)
         return render_template("error.html")     
                   
 @app.route("/notification-success")
 def notification_success():
+    app.logger.info('Email notification successfully sent.')
     return render_template('notification-success.html')
 
+@app.errorhandler(Exception)
+def unhandled_exception(e):
+    app.logger.error(e)
+    return render_template("error.html")
+    
 if __name__ == '__main__':
     app.debug = True
+    handler = RotatingFileHandler('application.log', maxBytes=10000, backupCount=5)
+    formatter = logging.Formatter("[%(asctime)s] {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s")
+    handler.setFormatter(formatter)
+    handler.setLevel(LOGGING_LEVEL)
+    app.logger.addHandler(handler)    
     app.secret_key = key
     app.run(host=APP_HOST, port=int(APP_PORT))

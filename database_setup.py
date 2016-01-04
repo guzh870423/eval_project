@@ -332,8 +332,8 @@ class ResetPassword(Form):
 
 class ResetPasswordSubmit(Form):
     user_name = HiddenField('user_name')
-    password = PasswordField('Password')
-    confirm = PasswordField('Confirm Password')
+    password = PasswordField('New Password', validators=[Required()])
+    confirm = PasswordField('Confirm Password', validators=[Required()])
     
 if __name__ == '__main__':    
     parser = SafeConfigParser()
