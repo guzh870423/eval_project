@@ -38,6 +38,10 @@ MAIL_DEFAULT_SENDER = parser.get('email', 'MAIL_DEFAULT_SENDER')
 APP_HOST = parser.get('apprun', 'host')
 APP_PORT = parser.get('apprun', 'port')
 
+CURRENT_SEASON = parser.get('currentsem', 'season') 
+CURRENT_YEAR = int(parser.get('currentsem', 'year'))
+CURRENT_COURSE_NO = parser.get('currentsem', 'course_no') 
+
 app = Flask(__name__)
 app.config['CSRF_ENABLED'] = True
 app.config['SECRET_KEY'] = key
@@ -69,7 +73,7 @@ def list_all():
             if form.validate_on_submit():
                 evals = []
                 evaler = dbSession.query(Student).filter_by(user_name=form.evaluations[0]['evaler_id'].data).first()
-                semester = dbSession.query(Semester).filter_by(year=2015, season='Fall', course_no='P532').first()
+                semester = dbSession.query(Semester).filter_by(year=CURRENT_YEAR, season=CURRENT_SEASON, course_no=CURRENT_COURSE_NO).first()
                 for eval in form.evaluations:
                     evalee = dbSession.query(Student).filter_by(user_name=eval['evalee_id'].data).first()
                     
