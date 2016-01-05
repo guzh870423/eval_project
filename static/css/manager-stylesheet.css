@@ -14,16 +14,20 @@
    padding: 20px;    
 }
 
-td{
-  width: 80%;
+table{
+    width: 70%;
 }
 
-.radio-buttons{
-    width: 102%;
+.table-col-1{
+    width: 45%;
 }
 
-.radio-buttons > div{
-    display: inline-block;
+.table-col-2{
     width: 20%;
-    text-align: center;
+}
+
+.table-col-3{
+    width: 20%;
+    float: left;
+    text-align: left;
 }

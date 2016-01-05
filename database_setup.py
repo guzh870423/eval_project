@@ -312,7 +312,10 @@ class EvalListForm(Form):
         for field in self.evaluations:
             sum_of_tokens = sum_of_tokens + field['tokens'].data
             ranksArray.append(field['rank'].data)
-        
+            is_manager = field['is_manager'].data
+            if(is_manager == 1):
+                result = self.validateManagerForm(field['managerEval'])            
+            
         if sum_of_tokens != 100:
             flash('Sum of Tokens should be 100.')
             result = False
@@ -327,6 +330,14 @@ class EvalListForm(Form):
             
         return result
 
+    def validateManagerForm(self, managerEval):
+        result = True
+        for field in managerEval:
+            if field.data == 'None':
+                field.errors.append('Invalid Selection')
+                result = False
+        return result
+    
 class ResetPassword(Form):
     user_name = TextField('User Name', validators=[Required()])
 

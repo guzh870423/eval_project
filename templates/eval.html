@@ -85,24 +85,25 @@
         <div class='questions-message'>Rate your manager on following qualities (5 being highest)</div>
             <table>
             <tr>
-                <td></td>
-                <td>
-                <div class='radio-buttons'>
-                <div>1</div><div>2</div><div>3</div><div>4</div><div>5</div>
-                </div>
-                </td>
+                <td class='table-col-1'></td>
+                {% for element in eval['managerEval']['approachable'] %}     
+                    <td>{{element.label}}</td>
+                {% endfor %}  
+                <td class='table-col-3'></td>
             </tr>
             {% for managerEval in eval['managerEval'] %}                
                 <tr>
-                    <td>
-                        {{managerEval.label}}
+                    <td class='table-col-1'>
+                        {{managerEval.label(class='control-label')}}
                     </td>
+                    {% for element in managerEval %}
                     <td>
-                        {% for element in managerEval %}
-                            {{element}}
-                        {% endfor %}
-                    </td>        
-                    <div class='validation-error-message'>{{managerEval.errors[0] }}</div>    
+                        {{element}}
+                    </td>                      
+                    {% endfor %}                        
+                    <td class='table-col-3'>
+                        <div class='validation-error-message'>{{managerEval.errors[0] }}</div>
+                    </td>    
                 </tr>                
             {% endfor %}   
             </table>        
