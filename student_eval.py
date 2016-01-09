@@ -30,7 +30,7 @@ schema = parser.get('login', 'schema')
 host = parser.get('login', 'host')
 port = parser.get('login', 'port')
 
-key = parser.get('security', 'key')
+#key = parser.get('security', 'key')
 
 MAIL_SERVER = parser.get('email', 'MAIL_SERVER')
 MAIL_PORT = parser.get('email', 'MAIL_PORT')
@@ -45,6 +45,9 @@ CURRENT_YEAR = int(parser.get('currentsem', 'year'))
 CURRENT_COURSE_NO = parser.get('currentsem', 'course_no') 
 
 LOGGING_LEVEL = parser.get('logs', 'LOGGING_LEVEL')
+
+parser.read('semester_encryption_keys.ini')
+key = parser.get('encryptionkeys', CURRENT_SEASON + '-' + str(CURRENT_YEAR) + '-' + CURRENT_COURSE_NO)
 
 app = Flask(__name__)
 app.config['CSRF_ENABLED'] = True

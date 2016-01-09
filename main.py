@@ -24,6 +24,10 @@ schema = parser.get('login', 'schema')
 host = parser.get('login', 'host')
 port = parser.get('login', 'port')
 
+CURRENT_SEASON = parser.get('currentsem', 'season') 
+CURRENT_YEAR = int(parser.get('currentsem', 'year'))
+CURRENT_COURSE_NO = parser.get('currentsem', 'course_no') 
+
 weightsForAverageRank = []
 for weight in parser.get('constants', 'weights_for_average_rank').split(','):
     weightsForAverageRank.append(int(weight))
@@ -35,7 +39,9 @@ app = Flask(__name__)
 #DBSession = sessionmaker(bind=engine)
 session = None #DBSession()
 
-key = parser.get('security', 'key')
+#key = parser.get('security', 'key')
+parser.read('semester_encryption_keys.ini')
+key = parser.get('encryptionkeys', CURRENT_SEASON + '-' + str(CURRENT_YEAR) + '-' + CURRENT_COURSE_NO)
 evalCipher = EvalCipher(key)
 
 raw_options = {
