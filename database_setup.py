@@ -38,12 +38,12 @@ class Student(Base):
         }
         
     def get_token(self, expiration=100):
-        s = TimedJSONWebSignatureSerializer('p532keyconfidential', expiration)
+        s = TimedJSONWebSignatureSerializer('keyconfidential', expiration)
         return s.dumps(self.user_name).decode('utf-8')
         
     @staticmethod
     def verify_token(token):
-        s = TimedJSONWebSignatureSerializer('p532keyconfidential')
+        s = TimedJSONWebSignatureSerializer('keyconfidential')
         try:
             data = s.loads(token)
         except:
