@@ -46,6 +46,7 @@ if semester == None:
     sys.exit(5)
 
 try:
+    enrollment = []
     is_overwrite = False
     for row in range(2, rows + 1):
         semester_id = sheet['A' + str(row)].value
@@ -89,9 +90,10 @@ try:
                 print 'Invalid choice.'
                 sys.exit(2)
         
-        enrollment = Enrollment(student=student, semester=semester)
-        session.add(enrollment)
-
+        enrollment.append(Enrollment(student=student, semester=semester))
+        
+    for enroll in enrollment:
+        session.add(enroll)    
     session.commit()
     print "Student configuration tables successfully populated."
 except Exception as e:
