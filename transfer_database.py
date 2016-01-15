@@ -21,8 +21,8 @@ port = parser.get('login', 'port')
 key = parser.get('security', 'key')
 evalCipher = EvalCipher(key)
 
-engine = create_engine('mysql://' + username + ':' + password + '@' + host +':' + port + '/' + schema) 
-#engine = create_engine('mysql://root:root@localhost:3306/eval1') 
+#engine = create_engine('mysql://' + username + ':' + password + '@' + host +':' + port + '/' + schema) 
+engine = create_engine('mysql://root:root@localhost:3306/eval1') 
 Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
