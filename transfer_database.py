@@ -22,12 +22,13 @@ key = parser.get('security', 'key')
 evalCipher = EvalCipher(key)
 
 engine = create_engine('mysql://' + username + ':' + password + '@' + host +':' + port + '/' + schema) 
+#engine = create_engine('mysql://root:root@localhost:3306/eval1') 
 Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
 Base0 = declarative_base()
-engine0 = create_engine('mysql://root:pass123@localhost:3306/eval0')  
+engine0 = create_engine('mysql://root:root@localhost:3306/eval0')  
 Base0.metadata.bind = engine0
 DBSession0 = sessionmaker(bind=engine0)
 session0 = DBSession0()
@@ -69,7 +70,13 @@ class Student0(Base0):
         student.email = self.EMAIL
         student.create_time = self.CREATE_TIME
         semester = session.query(Semester).filter_by(id=self.SEMESTER_ID).first()
+        if semester == None:
+            print 'Semester Not found for:'
+            print self.USER_NAME
         enrollment = Enrollment(student=student, semester=semester)
+        if enrollment == None:
+            print 'Enrollment Not populated for:'
+            print self.USER_NAME
         return student, enrollment
     
 class Evaluation0(Base0):
@@ -97,6 +104,14 @@ class Evaluation0(Base0):
         evaluation.submission_time = self.SUBMISSION_TIME
         evaluation.adjective = self.ADJ
         enrollment = session.query(Enrollment).filter_by(student_id=self.EVALER_ID).first()
+        if enrollment == None:
+            enrollment_tmp = session.query(Enrollment).filter_by(student_id=self.EVALER_ID).all()
+            if enrollment_tmp == None:
+                print 'No record found in enrollment table.'
+            else:    
+                for element in enrollment_tmp:
+                    print element.student_id, element.semester_id
+            print self.EVALER_ID, self.EVALEE_ID, self.WEEK, self.RANK, self.TOKEN, self.DESCRIPTION
         evaluation.semester_id = enrollment.semester_id
         evaluation.semester = enrollment.semester
         evaluation.evaler = session.query(Student).filter_by(user_name=self.EVALER_ID).first()
