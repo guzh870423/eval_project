@@ -117,7 +117,7 @@ def reports(semester_id, currentWeek):
     students = queryStudents(semester_id)
      
     # which weeks do two students work together, connection[student1][student2] = [week1, week2]
-    connection = queryConnection(students)
+    connection = queryConnection(students, semester)
     
     # Evaluation dictionary: evals[currentWeek][evaler][evalee] = evaluation
     evals = []
@@ -180,7 +180,7 @@ def queryStudents(semester_id):
         students.append(enrollment.student)
     return students
 # get connection matrix for students
-def queryConnection(students):
+def queryConnection(students, semester):
     connection = {}
     #intialize connection
     for student1 in students:
@@ -189,7 +189,7 @@ def queryConnection(students):
             connection[student1.user_name][student2.user_name] = []
     
     #assign connection
-    groups = session.query(Groups).all()
+    groups = session.query(Groups).filter_by(semester=semester).all()
     for group in groups:
         studentsInGroup = session.query(Group_Student).filter_by(group_id=group.id).all()
         for student1 in studentsInGroup:
