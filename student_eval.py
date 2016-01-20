@@ -115,8 +115,9 @@ def list_all():
     except Exception as e:
             app.logger.error(e)
             return render_template("error.html") 
-            
-    max_week = dbSession.query(func.max(Groups.week).label('maxweek'))
+    
+    semester = dbSession.query(Semester).filter_by(year=CURRENT_YEAR, season=CURRENT_SEASON, course_no=CURRENT_COURSE_NO).first()    
+    max_week = dbSession.query(func.max(Groups.week).label('maxweek')).filter_by(semester=semester)
     number_of_evaluations_submitted = dbSession.query(EncryptedEvaluation).filter(EncryptedEvaluation.week == max_week, EncryptedEvaluation.evaler_id == app_user).count()
    
     if number_of_evaluations_submitted > 0:
