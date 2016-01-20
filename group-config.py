@@ -1,13 +1,14 @@
 import sys
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-
+import itertools
 from database_setup import Student, Base, Groups, Semester, Group_Student, Enrollment, Evaluation, EncryptedEvaluation
 from ConfigParser import SafeConfigParser
 from encrypt import EvalCipher
 from sqlalchemy import func, and_
 import csv
 import openpyxl
+from collections import deque
 
 parser = SafeConfigParser()
 parser.read('config.ini')
@@ -32,60 +33,97 @@ DBSession = sessionmaker(bind=engine)
 # session.rollback()
 session = DBSession()
 
-wb = openpyxl.load_workbook('group-config.xlsx')
-wb.get_sheet_names()
-sheet = wb.get_sheet_by_name('groups')
-rows = sheet.max_row
-columns = sheet.max_column
-print 'Populating configuration data...'
+requested_operation = None
+
+num_of_arguments = len(sys.argv)
+if num_of_arguments == 2:
+    requested_operation = sys.argv[1]
+else:
+    print 'Incorrect number of arguments specified.'
+    sys.exit(10)
+
+if requested_operation != 'add' and requested_operation != 'update':
+    print 'Invalid argument specified.'
+    sys.exit(11)
+
+file = open('group-config.csv', 'rb')
+reader = csv.reader(file, delimiter=',')
+next(reader)
+print 'Populating group configuration data...'
 
 try:
-    current_semester_id = sheet['A' + str(2)].value
-    current_semester = session.query(Semester).filter_by(id=current_semester_id).first()
-    current_week = sheet['B' + str(2)].value
-    
-    data_count = session.query(Groups).filter_by(semester=current_semester, week=current_week).count()
-    if data_count > 0:
-        var = raw_input("Matching week's data already present in the database. Would you like to overwrite it? (Y/N): ")
-        if var == 'y' or var == 'Y':
-            var2 = raw_input("Are you sure you want to overwrite the data? (Y/N): ")
-            if var2 == 'y' or var2 == 'Y':    
-                session.query(Groups).filter_by(semester=current_semester, week=current_week).delete()
-            elif var2 == 'n' or var2 == 'N':
-                print 'You selected NO.'
-                sys.exit(0)
-            else:
-                print 'Invalid choice.'
-                sys.exit(3)    
-        elif var == 'n' or var == 'N':
-            print 'You selected NO.'
-            sys.exit(1)
-        else:
-            print 'Invalid choice.'
-            sys.exit(2)
-except Exception as e:
-    print "Unexpected Error occurred.", str(e)    
-
-try:
-    for row in range(2, rows + 1):
-        semester_id = sheet['A' + str(row)].value
-        week = sheet['B' + str(row)].value
-        assignment_name = sheet['C' + str(row)].value
-        group_name = sheet['D' + str(row)].value
-        student_id = sheet['E' + str(row)].value
-        is_manager = sheet['F' + str(row)].value
+    if requested_operation == 'add':
+        for row in reader:
+            year = row[0].strip()
+            season = row[1].strip()
+            course_no = row[2].strip()
+            week = row[3].strip()
+            assignment_name = row[4].strip()
+            group_name = row[5].strip()
+            student_id = row[6].strip()
+            is_manager = row[7].strip()
+                    
+            semester = session.query(Semester).filter_by(year=year, season=season, course_no=course_no).first()
+            if semester == None:
+                print 'One or more semester configuration not found.'
+                sys.exit(10)
                 
-        semester = session.query(Semester).filter_by(id=semester_id).first()
-        group = session.query(Groups).filter_by(week=week, name=group_name).first()
-        if group == None:
-            group = Groups(semester=semester, week=week, name=group_name, assignment_name=assignment_name)
-            session.add(group)
-        student = session.query(Student).filter_by(user_name=student_id).first()
-        group_student = Group_Student(groups=group, student=student, is_manager = is_manager)
-        session.add(group_student)
-
+            group = session.query(Groups).filter_by(semester=semester, week=week, name=group_name).first()
+            if group == None:
+                group = Groups(semester=semester, week=week, name=group_name, assignment_name=assignment_name)
+                session.add(group)
+            
+            student = session.query(Student).filter_by(user_name=student_id).first()
+            if student == None:
+                print 'One or more student configuration not found.'
+                sys.exit(11)
+             
+            group_student = session.query(Group_Student).filter_by(groups=group, student=student, is_manager = is_manager).first()
+            if group_student == None:
+                group_student = Group_Student(groups=group, student=student, is_manager = is_manager)
+                session.add(group_student)
+    else:
+        file_tmp = open('group-config.csv', 'rb')
+        lastLine = deque(csv.reader(file_tmp, delimiter=','), 1)[0]
+        year = lastLine[0].strip()
+        season = lastLine[1].strip()
+        course_no = lastLine[2].strip()
+        week = lastLine[3].strip()
+        current_semester = session.query(Semester).filter_by(year=year, season=season, course_no=course_no).first()
+        
+        if requested_operation == 'update':
+            max_week = session.query(func.max(Groups.week)).filter_by(semester=current_semester).scalar()
+            session.query(Groups).filter_by(semester=current_semester, week=max_week).delete()
+            
+            for row in reader:
+                year = row[0].strip()
+                season = row[1].strip()
+                course_no = row[2].strip()
+                week = row[3].strip()
+                assignment_name = row[4].strip()
+                group_name = row[5].strip()
+                student_id = row[6].strip()
+                is_manager = row[7].strip()
+                    
+                semester = session.query(Semester).filter_by(year=year, season=season, course_no=course_no).first()
+                if semester == None:
+                    print 'One or more semester configuration not found.'
+                    sys.exit(10)
+                    
+                group = session.query(Groups).filter_by(semester=semester, week=week, name=group_name).first()
+                if group == None:
+                    group = Groups(semester=semester, week=week, name=group_name, assignment_name=assignment_name)
+                    session.add(group)
+                
+                student = session.query(Student).filter_by(user_name=student_id).first()
+                if student == None:
+                    print 'One or more student configuration not found.'
+                    sys.exit(11)
+                 
+                group_student = Group_Student(groups=group, student=student, is_manager = is_manager)
+                session.add(group_student)        
     session.commit()
-    print "Configuration Data inserted Successfully."
+    print "Configuration data successfully populated."
     session.close()
 except Exception as e:
     print "Error populating group configuration tables.", str(e)

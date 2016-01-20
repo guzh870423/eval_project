@@ -32,68 +32,80 @@ DBSession = sessionmaker(bind=engine)
 # session.rollback()
 session = DBSession()
 
-wb = openpyxl.load_workbook('student-config.xlsx')
-wb.get_sheet_names()
-sheet = wb.get_sheet_by_name('students')
-rows = sheet.max_row
-columns = sheet.max_column
-print 'Populating Student configuration data...'
+requested_operation = None
 
-sem_id = sheet['A' + str(2)].value
-semester = session.query(Semester).filter_by(id=sem_id).first()
-if semester == None:
-    print('Invalid Semester ID specified.')
-    sys.exit(5)
+num_of_arguments = len(sys.argv)
+if num_of_arguments == 2:
+    requested_operation = sys.argv[1]
+else:
+    print 'Incorrect number of arguments specified.'
+    sys.exit(10)
+
+if requested_operation != 'add' and requested_operation != 'update':
+    print 'Invalid argument specified.'
+    sys.exit(11)
+
+file = open('student-config.csv', 'rb')
+reader = csv.reader(file, delimiter=',')
+next(reader)
+print 'Populating student configuration data...'
 
 try:
-    enrollment = []
-    is_overwrite = False
-    for row in range(2, rows + 1):
-        semester_id = sheet['A' + str(row)].value
-        user_name = sheet['B' + str(row)].value
-        first_name = sheet['C' + str(row)].value
-        last_name = sheet['D' + str(row)].value
-        email = sheet['E' + str(row)].value
-        alias_name = sheet['F' + str(row)].value
-        
-        is_student_exists = session.query(Student).filter_by(user_name=user_name).count()
-        is_student_enrolled = session.query(Enrollment).filter_by(student_id=user_name, semester_id=semester_id).count()
-        
-        student = None
-        if is_student_exists > 0:
-            student = session.query(Student).filter_by(user_name=user_name).first()
-            student.first_name = first_name
-            student.last_name = last_name
-            student.email = email
-            student.alias_name = alias_name
-        else:
-            student = Student(user_name=user_name, first_name=first_name, last_name=last_name, email=email, alias_name=alias_name)
-            session.add(student)
+    if requested_operation == 'add':
+        for row in reader:
+            year = row[0].strip()
+            season = row[1].strip()
+            course_no = row[2].strip()
+            user_name = row[3].strip()
+            first_name = row[4].strip()
+            last_name = row[5].strip()
+            email = row[6].strip()
+            alias_name = row[7].strip()
             
-        if is_overwrite == False and is_student_enrolled > 0:
-            var = raw_input("One or more students already exist in the specified SEMESTER. Would you like to overwrite the ENROLLMENT config? (Y/N): ")
-            if var == 'y' or var == 'Y':
-                var2 = raw_input("Are you sure you want to overwrite the data? (Y/N): ")
-                if var2 == 'y' or var2 == 'Y':    
-                    is_overwrite = True
-                    session.query(Enrollment).filter_by(semester_id=semester_id).delete()
-                elif var2 == 'n' or var2 == 'N':
-                    print 'You selected NO.'
-                    sys.exit(0)
-                else:
-                    print 'Invalid choice.'
-                    sys.exit(3)    
-            elif var == 'n' or var == 'N':
-                print 'You selected NO.'
-                sys.exit(1)
+            semester = session.query(Semester).filter_by(year=year, season=season, course_no=course_no).first()
+            if semester == None:
+                print 'One or more semester configuration not found.'
+                sys.exit(10)
+                
+            is_student_exists = session.query(Student).filter_by(user_name=user_name).count()
+            is_student_enrolled = session.query(Enrollment).filter_by(student_id=user_name, semester=semester).count()
+            
+            if is_student_exists == 0:
+                student = Student(user_name=user_name, first_name=first_name, last_name=last_name, email=email, alias_name=alias_name)
+                enrollment = Enrollment(student=student, semester=semester)
+                session.add(student)
+                session.add(enrollment)
             else:
-                print 'Invalid choice.'
-                sys.exit(2)
-        
-        enrollment.append(Enrollment(student=student, semester=semester))
-        
-    for enroll in enrollment:
-        session.add(enroll)    
+                if is_student_enrolled == 0:
+                    student = session.query(Student).filter_by(user_name=user_name).first()
+                    enrollment = Enrollment(student=student, semester=semester)
+                    session.add(enrollment)    
+    elif requested_operation == 'update':            
+        for row in reader:
+            year = row[0].strip()
+            season = row[1].strip()
+            course_no = row[2].strip()
+            user_name = row[3].strip()
+            first_name = row[4].strip()
+            last_name = row[5].strip()
+            email = row[6].strip()
+            alias_name = row[7].strip()
+            
+            semester = session.query(Semester).filter_by(year=year, season=season, course_no=course_no).first()
+            if semester == None:
+                print 'One or more semester configuration not found.'
+                sys.exit(11)
+                
+            is_student_exists = session.query(Student).filter_by(user_name=user_name).count()
+            is_student_enrolled = session.query(Enrollment).filter_by(student_id=user_name, semester=semester).count()
+            
+            if is_student_exists > 0:
+                student = session.query(Student).filter_by(user_name=user_name).first()
+                student.first_name = first_name
+                student.last_name = last_name
+                student.email = email
+                student.alias_name = alias_name
+                
     session.commit()
     print "Student configuration tables successfully populated."
 except Exception as e:
