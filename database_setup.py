@@ -37,7 +37,7 @@ class Student(Base):
 			'login_pwd': self.login_pwd
         }
         
-    def get_token(self, expiration=100):
+    def get_token(self, expiration=300):
         s = TimedJSONWebSignatureSerializer('keyconfidential', expiration)
         return s.dumps(self.user_name).decode('utf-8')
         
@@ -287,6 +287,8 @@ class ManagerEvalForm(WTForm):
 class EvalForm(WTForm):
     evaler_id = HiddenField('evaler_id', validators=[Required()])
     evalee_id = HiddenField('evalee_id', validators=[Required()])
+    evalee_fname = HiddenField('evalee_fname', validators=[Required()])
+    evalee_lname = HiddenField('evalee_lname', validators=[Required()])
     week = HiddenField('week', validators=[Required()])
     rank = IntegerField('Rank', validators=[Required()])
     tokens = IntegerField(u'Tokens', validators=[Required()])

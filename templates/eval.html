@@ -30,11 +30,11 @@
         {% endwith %}
         </div>
 	{% for eval in form.evaluations %}
-	<div style='display:none;'>{{eval['evaler_id']}},{{eval['evalee_id']}},{{eval['week']}},{{eval['is_manager']}}</div>
+	<div style='display:none;'>{{eval['evaler_id']}},{{eval['evalee_id']}},{{eval['week']}},{{eval['is_manager']}}, {{eval['evalee_fname']}}, {{eval['evalee_lname']}}</div>
 	<div class='container'>
     <div class='panel panel-primary dialog-panel'>
       <div class='panel-heading'>
-        <h4>{{eval['evalee_id'].data}}</h4>
+        <h4>{{eval['evalee_fname'].data}} {{eval['evalee_lname'].data}} ({{eval['evalee_id'].data}})</h4>
       </div>
       <div class='panel-body'>
           <div class='form-group'>

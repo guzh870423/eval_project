@@ -145,6 +145,8 @@ def list_all():
       y.evaler_id.data = app_user
       y.week.data = x.WEEK
       y.is_manager.data = x.is_manager
+      y.evalee_fname.data = x.first_name
+      y.evalee_lname.data = x.last_name
 
     return render_template(
        'eval.html',
@@ -219,7 +221,7 @@ def verify_user():
                 form.user_name.data = student.user_name
         else:
             app.logger.warning('Token verification failed while resetting the password.')
-            return render_template("error.html")     
+            return render_template("token-verification-error.html")     
     return render_template('reset-pwd.html', form=form)
     
 @app.route('/password-reset-success', methods=('GET', 'POST',))
