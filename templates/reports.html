@@ -69,8 +69,7 @@
             from last week.</p>
         {% endif %}
         <div class="row">
-            <div class ="col-md-6 col-md-push-3">
-            <table class="table table-hover">
+            <table class="table table-hover" style="width:80%">
             
             <tr>
                 <th>Evaler</th>
@@ -84,32 +83,31 @@
             {% if sortedEvaler[currentWeek-1].get(student.user_name) %}
             {% for evaler in sortedEvaler[currentWeek-1][student.user_name][0] %}
                 <tr>
-                    <td><b>{{ names[evaler] }}</b></th>
-                    <td>{{ connection[student.user_name][evaler] }}</th>
-                    <td>{{ len(evals[currentWeek-1][evaler]) }}</th>
-                    <td>{{ reversedEvals[currentWeek-1][student.user_name][evaler][1] }}</th>
-                    <td>{{ reversedEvals[currentWeek-1][student.user_name][evaler][2] }}</th>
-                    <td>{{ reversedEvals[currentWeek-1][student.user_name][evaler][0].adjective }}</th>
-                    <td>{{ reversedEvals[currentWeek-1][student.user_name][evaler][0].description }}</th>
+                    <td><b>{{ names[evaler] }}</b></td>
+                    <td>{{ connection[student.user_name][evaler] }}</td>
+                    <td>{{ len(evals[currentWeek-1][evaler]) }}</td>
+                    <td>{{ reversedEvals[currentWeek-1][student.user_name][evaler][1] }}</td>
+                    <td>{{ reversedEvals[currentWeek-1][student.user_name][evaler][2] }}</td>
+                    <td>{{ reversedEvals[currentWeek-1][student.user_name][evaler][0].adjective }}</td>
+                    <td>{{ reversedEvals[currentWeek-1][student.user_name][evaler][0].description }}</td>
                 </tr>
             {% endfor %}
             {% if sortedEvaler[currentWeek-1][student.user_name][1] %}
             <tr class="info"><td colspan="7"></td></tr>
             {% for evaler in sortedEvaler[currentWeek-1][student.user_name][1] %}
                 <tr>
-                    <td>{{ names[evaler] }}</th>
-                    <td>{{ connection[student.user_name][evaler] }}</th>
-                    <td>{{ len(evals[currentWeek-1][evaler]) }}</th>
-                    <td>{{ reversedEvals[currentWeek-1][student.user_name][evaler][1] }}</th>
-                    <td>{{ reversedEvals[currentWeek-1][student.user_name][evaler][2] }}</th>
-                    <td>{{ reversedEvals[currentWeek-1][student.user_name][evaler][0].adjective }}</th>
-                    <td>{{ reversedEvals[currentWeek-1][student.user_name][evaler][0].description }}</th>
+                    <td>{{ names[evaler] }}</td>
+                    <td>{{ connection[student.user_name][evaler] }}</td>
+                    <td>{{ len(evals[currentWeek-1][evaler]) }}</td>
+                    <td>{{ reversedEvals[currentWeek-1][student.user_name][evaler][1] }}</td>
+                    <td>{{ reversedEvals[currentWeek-1][student.user_name][evaler][2] }}</td>
+                    <td>{{ reversedEvals[currentWeek-1][student.user_name][evaler][0].adjective }}</td>
+                    <td>{{ reversedEvals[currentWeek-1][student.user_name][evaler][0].description }}</td>
                 </tr>
             {% endfor %}
             {% endif %}
             {% endif %}
         </table>
-    </div>
     </div>
         {% include 'charts/' + student.user_name + '.html' %}
       {% endif %}
