@@ -46,6 +46,11 @@ CURRENT_COURSE_NO = parser.get('currentsem', 'course_no')
 
 LOGGING_LEVEL = parser.get('logs', 'LOGGING_LEVEL')
 
+GOOD_ADJECTIVES = parser.get('adjectives', 'GOOD_ADJECTIVES').replace(' ','').split(",")
+BAD_ADJECTIVES = parser.get('adjectives', 'BAD_ADJECTIVES').replace(' ','').split(",")
+GOOD_ADJECTIVES.sort()
+BAD_ADJECTIVES.sort()
+
 parser.read('semester_encryption_keys.ini')
 key = parser.get('encryptionkeys', CURRENT_SEASON + '-' + str(CURRENT_YEAR) + '-' + CURRENT_COURSE_NO)
 
@@ -111,7 +116,7 @@ def list_all():
                 
                 return render_template('eval-success.html', week=form.evaluations[0]['week'].data)           
             else:
-                return render_template('eval.html',form = form)             
+                return render_template('eval.html',form = form, ga=GOOD_ADJECTIVES, ba=BAD_ADJECTIVES)             
     except Exception as e:
             app.logger.error(e)
             return render_template("error.html") 
@@ -147,10 +152,12 @@ def list_all():
       y.is_manager.data = x.is_manager
       y.evalee_fname.data = x.first_name
       y.evalee_lname.data = x.last_name
-
+    
     return render_template(
        'eval.html',
-       form = form)
+       form = form,
+       ga=GOOD_ADJECTIVES,
+       ba=BAD_ADJECTIVES)
 
 @app.route('/', methods=['GET', 'POST'])       
 @app.route('/login', methods=['GET', 'POST'])
