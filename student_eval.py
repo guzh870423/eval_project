@@ -123,7 +123,7 @@ def list_all():
     
     semester = dbSession.query(Semester).filter_by(year=CURRENT_YEAR, season=CURRENT_SEASON, course_no=CURRENT_COURSE_NO).first()    
     max_week = dbSession.query(func.max(Groups.week).label('maxweek')).filter_by(semester=semester)
-    number_of_evaluations_submitted = dbSession.query(EncryptedEvaluation).filter(EncryptedEvaluation.week == max_week, EncryptedEvaluation.evaler_id == app_user).count()
+    number_of_evaluations_submitted = dbSession.query(EncryptedEvaluation).filter(EncryptedEvaluation.week == max_week, EncryptedEvaluation.evaler_id == app_user, EncryptedEvaluation.semester == semester).count()
    
     if number_of_evaluations_submitted > 0:
         return render_template('resubmitError.html', week=max_week.scalar())
@@ -131,13 +131,13 @@ def list_all():
     evaler = aliased(Group_Student)
     evalee = aliased(Group_Student)
 
-    sub_groups = dbSession.query(Groups.week, Groups.id.label('GROUP_ID'), Group_Student.student_id).filter(Groups.id==Group_Student.group_id, Groups.week==max_week).subquery()
+    sub_groups = dbSession.query(Groups.week, Groups.id.label('GROUP_ID'), Group_Student.student_id).filter(Groups.id==Group_Student.group_id, Groups.week==max_week, Groups.semester==semester).subquery()
 
-    sub_student_evals = dbSession.query(Groups.week, Groups.id, evaler.student_id.label('EVALER_ID'), evalee.student_id.label('EVALEE_ID')).filter(Groups.id==evaler.group_id, evaler.group_id==evalee.group_id, evaler.student_id<>evalee.student_id, evaler.student_id==app_user).order_by(Groups.week, evaler.student_id, evalee.student_id).subquery()
+    sub_student_evals = dbSession.query(Groups.week, Groups.id, evaler.student_id.label('EVALER_ID'), evalee.student_id.label('EVALEE_ID')).filter(Groups.id==evaler.group_id, evaler.group_id==evalee.group_id, evaler.student_id<>evalee.student_id, evaler.student_id==app_user, Groups.semester==semester).order_by(Groups.week, evaler.student_id, evalee.student_id).subquery()
 
     current_evals = dbSession.query(sub_groups.c.week.label('WEEK'), sub_student_evals.c.EVALER_ID, sub_student_evals.c.EVALEE_ID).filter(sub_groups.c.week >= sub_student_evals.c.week, sub_groups.c.student_id == sub_student_evals.c.EVALER_ID).group_by(sub_groups.c.week.label('WEEK'), sub_student_evals.c.EVALER_ID, sub_student_evals.c.EVALEE_ID).order_by(sub_groups.c.week, sub_student_evals.c.EVALER_ID).subquery()
    
-    max_week_group_ids = dbSession.query(Groups.id).filter(Groups.week==max_week).subquery()
+    max_week_group_ids = dbSession.query(Groups.id).filter(Groups.week==max_week, Groups.semester==semester).subquery()
     current_managers = dbSession.query(Group_Student.student_id, Group_Student.is_manager).filter(Group_Student.group_id.in_(max_week_group_ids), Group_Student.is_manager==1).subquery()
    
     form_evals = dbSession.query(current_evals.c.WEEK, current_evals.c.EVALEE_ID, Student.first_name, Student.last_name, current_managers.c.is_manager).join(Student, current_evals.c.EVALEE_ID==Student.user_name).outerjoin(current_managers, current_evals.c.EVALEE_ID==current_managers.c.student_id).order_by(current_evals.c.EVALEE_ID).all()

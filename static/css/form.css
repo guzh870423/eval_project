@@ -35,8 +35,10 @@ label.control-label {
 }
 .form-header{
   text-align: center;
-  font-family: century;
-  font-size: 40px;
+  font-family: sommet-slab-1, sommet-slab-2, Georgia, serif;
+  text-shadow: 1px 1px 1px #456555;
+  font-size: 45px;
+  color: #696969;
 }
 .center-button{
   text-align: center;
