@@ -139,6 +139,9 @@ def reports(semester_id, currentWeek):
     # names is a map from "user_name" to "alias_name" (if exists) or "first_name last_name" 
     names = mapNames(students)
     
+    # isStudentActive is a map from "user_name" to student's status in class
+    isStudentActive = mapActiveStudents(students)
+    
     # students name list who fail to submit eval
     missingNames = missingEvalers(currentWeek, evals, students)
          
@@ -159,6 +162,7 @@ def reports(semester_id, currentWeek):
         students=students,
         sortedByAverageRank=sortedByAverageRank,
         names=names,
+        isStudentActive=isStudentActive,
         missingNames=missingNames,
         connection=connection,
         evals=evals,
@@ -168,7 +172,7 @@ def reports(semester_id, currentWeek):
         averageToken=averageToken,
         len=len,
         weightedRank=weightedRank,
-        adjectives=adjectives,
+        adjectives=adjectives
         )
 
 # get list of students for specified semester
@@ -367,6 +371,12 @@ def mapNames(students):
         else:
             names[student.user_name] = student.first_name + " " + student.last_name
     return names
+
+def mapActiveStudents(students):
+    isStudentActive = {}
+    for student in students:
+        isStudentActive[student.user_name] = student.is_active
+    return isStudentActive        
 
 def missingEvalers(currentWeek, evals, students):
     missingNames = []
