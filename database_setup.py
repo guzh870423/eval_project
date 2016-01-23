@@ -292,9 +292,9 @@ class EvalForm(WTForm):
     week = HiddenField('Week', validators=[Required()])
     rank = IntegerField('Rank', validators=[Required()])
     tokens = IntegerField('Tokens', validators=[Required()])
-    adjective = TextField('Adjective', validators=[Required()])
+    adjective = TextField('Adjective', validators=[Required(), Length(max=128)])
     adjectiveDropDown = SelectField('AdjectiveDropDown', choices = [], validators=[Optional()])
-    description = TextAreaField('Description', validators=[Required()])
+    description = TextAreaField('Description', validators=[Required(), Length(max=4096)])
     is_manager = IntegerField('is_manager', validators=[Optional()])
     managerEval = FormField(ManagerEvalForm)
     
