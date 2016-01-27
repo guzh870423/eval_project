@@ -1,7 +1,7 @@
 from flask import Flask, render_template, url_for, request, redirect
-from sqlalchemy import create_engine, distinct
+from sqlalchemy import create_engine, distinct, asc, desc
 from sqlalchemy.orm import sessionmaker
-from database_setup import Student, Base, Groups, Semester, Group_Student, Enrollment, Evaluation, EncryptedEvaluation
+from database_setup import Student, Base, Groups, Semester, Group_Student, Enrollment, Evaluation, EncryptedEvaluation, EncryptedManagerEval
 from ConfigParser import SafeConfigParser
 from encrypt import EvalCipher
 from highcharts import Highchart
@@ -101,11 +101,90 @@ def main():
             return redirect(url_for('set_alias', semester_id=semester_id))
         elif request.form['submit'] == 'Student drop class':
             return redirect(url_for('drop_class', semester_id=semester_id))
+        elif request.form['submit'] == 'Get Manager Report':
+            week=request.form['week']
+            return redirect(url_for('manager_report', semester_id=semester_id, currentWeek=week))    
     else:
         semesters = session.query(Semester).all()
   
         weeks = session.query(distinct(Groups.week)).all()
         return render_template('main.html', semesters=semesters, weeks=weeks, str=str)
+
+@app.route('/manager-report/<int:semester_id>/<int:currentWeek>', methods=['GET', 'POST'])
+def manager_report(semester_id, currentWeek):
+    # names is a map from "user_name" to "alias_name" (if exists) or "first_name last_name" 
+    names = mapNames(queryStudents(semester_id))
+    
+    semester = session.query(Semester).filter_by(id=semester_id).one()
+
+    encrypted_evals = session.query(EncryptedEvaluation).filter(EncryptedEvaluation.semester==semester, EncryptedEvaluation.week==currentWeek, EncryptedEvaluation.manager_id.isnot(None)).order_by(asc(
+    EncryptedEvaluation.evalee_id))
+    
+    manager_list = session.query(distinct(encrypted_evals.subquery().c.evalee_id)).all()
+    
+    managerEvals = {}
+    avgMgrEvals = {}
+    for manager in manager_list:
+        manager_id = manager[0]
+        managerEvals[manager_id] = {}
+        for encrypted_eval in encrypted_evals.all():
+            if manager_id == encrypted_eval.evalee_id:
+                encryptedMgrEval = session.query(EncryptedManagerEval).filter_by(manager_id=encrypted_eval.manager_id).first()
+                eval = evalCipher.decryptManagerEval(encryptedMgrEval)
+                managerEvals[manager_id][encrypted_eval.evaler_id] = []
+                managerEvals[manager_id][encrypted_eval.evaler_id].append(eval)
+        
+        for manager in managerEvals:
+            avgMgrEvals[manager] = {}
+            
+            avgMgrEvals[manager]['approachable_attitude'] = []
+            avgMgrEvals[manager]['team_communication'] = []
+            avgMgrEvals[manager]['client_interaction'] = []
+            avgMgrEvals[manager]['decision_making'] = []
+            avgMgrEvals[manager]['resource_utilization'] = []
+            avgMgrEvals[manager]['follow_up_to_completion'] = []
+            avgMgrEvals[manager]['task_delegation_and_ownership'] = []
+            avgMgrEvals[manager]['encourage_team_development'] = []
+            avgMgrEvals[manager]['realistic_expectation'] = []
+            avgMgrEvals[manager]['performance_under_stress'] = []
+            
+            approachable_attitude = 0.0
+            team_communication = 0.0
+            client_interaction = 0.0
+            decision_making = 0.0
+            resource_utilization = 0.0
+            follow_up_to_completion = 0.0
+            task_delegation_and_ownership = 0.0
+            encourage_team_development = 0.0
+            realistic_expectation = 0.0
+            performance_under_stress = 0.0
+            
+            for evaler in managerEvals[manager]:
+                for e in managerEvals[manager][evaler]:
+                    approachable_attitude = approachable_attitude + e.approachable_attitude    
+                    team_communication = team_communication + e.team_communication
+                    client_interaction = client_interaction + e.client_interaction
+                    decision_making = decision_making + e.decision_making
+                    resource_utilization = resource_utilization + e.resource_utilization
+                    follow_up_to_completion = follow_up_to_completion + e.follow_up_to_completion
+                    task_delegation_and_ownership = task_delegation_and_ownership + e.task_delegation_and_ownership
+                    encourage_team_development = encourage_team_development + e.encourage_team_development
+                    realistic_expectation = realistic_expectation + e.realistic_expectation
+                    performance_under_stress = performance_under_stress + e.performance_under_stress
+                
+            num_of_evalers = len(managerEvals[manager])
+            avgMgrEvals[manager]['approachable_attitude'].append(approachable_attitude/num_of_evalers)
+            avgMgrEvals[manager]['team_communication'].append(team_communication/num_of_evalers)
+            avgMgrEvals[manager]['client_interaction'].append(client_interaction/num_of_evalers)
+            avgMgrEvals[manager]['decision_making'].append(decision_making/num_of_evalers)
+            avgMgrEvals[manager]['resource_utilization'].append(resource_utilization/num_of_evalers)
+            avgMgrEvals[manager]['follow_up_to_completion'].append(follow_up_to_completion/num_of_evalers)
+            avgMgrEvals[manager]['task_delegation_and_ownership'].append(task_delegation_and_ownership/num_of_evalers)
+            avgMgrEvals[manager]['encourage_team_development'].append(encourage_team_development/num_of_evalers)
+            avgMgrEvals[manager]['realistic_expectation'].append(realistic_expectation/num_of_evalers)
+            avgMgrEvals[manager]['performance_under_stress'].append(performance_under_stress/num_of_evalers )
+                
+    return render_template('manager-report.html', semester=semester, currentWeek=currentWeek, managerEvals=managerEvals, avgMgrEvals=avgMgrEvals, names=names)
 
 @app.route('/reports/<int:semester_id>/<int:currentWeek>', methods=['GET', 'POST'])
 def reports(semester_id, currentWeek):

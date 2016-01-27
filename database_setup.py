@@ -358,10 +358,8 @@ if __name__ == '__main__':
     host = parser.get('login', 'host')
     port = parser.get('login', 'port')
 
-
-    #engine = create_engine('mysql://' + username + ':' + password + '@' + host +':' + port + '/' + schema) 
-    engine = create_engine('mysql://root:root@localhost:3306/eval1') 
-    
+    engine = create_engine('mysql://' + username + ':' + password + '@' + host +':' + port + '/' + schema) 
+        
     Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)
     Base.metadata.tables["evaluation"].drop(bind = engine)
