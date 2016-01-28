@@ -46,8 +46,8 @@ evalCipher = EvalCipher(key)
 
 raw_options = {
     'chart':{
-            'width': 1000,
-            'height': 500,
+            'width': 1000,  
+            'height' : 500,        
     },
     'title':{
     },
@@ -64,6 +64,9 @@ raw_options = {
         'showLastLabel': True
     },
     'yAxis': {
+        'reversedStacks' : False,
+        'min' : -1,
+        'max' : 1,
         'reversed': True,
             'title': {
                 
@@ -77,10 +80,12 @@ raw_options = {
     },
     'legend': {
             'enabled': True,
+            'layout' : 'vertical',            
+            
     },
         'tooltip': {
             'headerFormat': '<b>{series.name}</b><br/>',
-            'pointFormat': 'Rank {point.x}: Week {point.y}'
+            'pointFormat': 'Rank {point.y} : Week {point.x}'
         },
     'navigation':{
             'buttonOptions':{
@@ -368,6 +373,7 @@ def queryEvals(currentWeek, semester_id, students, connection):
 def compareChart(currentWeek, students, names, averageRank):
     if not os.path.exists(chart_folder):
         os.makedirs(chart_folder)
+    raw_options['chart']['height'] = 800
     options = copy.deepcopy(raw_options)
     options['title']['text'] = 'Normalized Rank Comparison Chart'
     options['yAxis']['title']['text'] = 'Normalized Rank'
@@ -394,8 +400,11 @@ def compareChart(currentWeek, students, names, averageRank):
 def generateCharts(currentWeek, students, names, averageRank, averageToken):
     if not os.path.exists(chart_folder):
         os.makedirs(chart_folder)
+    raw_options['chart']['height'] = 500    
     options = copy.deepcopy(raw_options)
     options['yAxis'] = [{
+        'min' : -1,
+        'max' : 1,
         'reversed': True,
             'title': {
                 'text': 'Normalized Rank'
@@ -483,12 +492,15 @@ def mostFrequentAdjectives(currentWeek, reversedEvals):
         dict = {}
         for evaler in reversedEvals[currentWeek-1][evalee]:
             adjs = reversedEvals[currentWeek-1][evalee][evaler][0].adjective.split(' ,.')
+            print adjs
             for adj in adjs:
                 count = dict.get(adj)
                 if not count:
                     count = 0
                 dict[adj] = count + 1
-        result[evalee] = max(dict.iteritems(), key=operator.itemgetter(1))[0]
+        freqAdjective = max(dict.iteritems(), key=operator.itemgetter(1))[0]
+        occurrence = freqAdjective + ' (' + str(dict[freqAdjective])+ ')'
+        result[evalee] = occurrence
     return result
              
 @app.route('/', methods=['GET', 'POST'])
