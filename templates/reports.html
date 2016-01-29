@@ -59,7 +59,7 @@
     {% for student_id in sortedByAverageRank %}
         {% if isStudentActive[student_id] %}
         <br>
-        <h2>Evalee: {{ names[student_id] }}</h2>
+        <h2 align="center">Evalee: {{ names[student_id] }}</h2>
         {% if currentWeek > 1 and averageRank[currentWeek-1].get(student_id) and averageRank[currentWeek-2].get(student_id) %}
             </p>Average rank: {{ averageRank[currentWeek-1][student_id] }}, 
             change {{ averageRank[currentWeek-1][student_id]-averageRank[currentWeek-2][student_id] }} 
