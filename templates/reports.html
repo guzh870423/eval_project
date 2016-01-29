@@ -70,10 +70,10 @@
             
             <tr>
                 <th>Evaler</th>
-                <th>team week</th>
+                <th>Team week</th>
                 <th>No. rev.</th>
-                <th>Nm. rk</th>
-                <th>Nm. tkn</th>
+                <th>Rank</th>
+                <th>Tokens</th>
                 <th>Adjective</th>
                 <th>Description</th>
             </tr>
@@ -83,8 +83,8 @@
                         <td><b>{{ names[evaler] }}</b></td>
                         <td>{{ connection[student_id][evaler] }}</td>
                         <td>{{ len(evals[currentWeek-1][evaler]) }}</td>
-                        <td>{{ reversedEvals[currentWeek-1][student_id][evaler][1] }}</td>
-                        <td>{{ reversedEvals[currentWeek-1][student_id][evaler][2] }}</td>
+                        <td>{{ reversedEvals[currentWeek-1][student_id][evaler][0].rank }}</td>
+                        <td>{{ reversedEvals[currentWeek-1][student_id][evaler][0].token }}</td>
                         <td>{{ reversedEvals[currentWeek-1][student_id][evaler][0].adjective }}</td>
                         <td>{{ reversedEvals[currentWeek-1][student_id][evaler][0].description }}</td>
                     </tr>
@@ -96,8 +96,8 @@
                             <td>{{ names[evaler] }}</td>
                             <td>{{ connection[student_id][evaler] }}</td>
                             <td>{{ len(evals[currentWeek-1][evaler]) }}</td>
-                            <td>{{ reversedEvals[currentWeek-1][student_id][evaler][1] }}</td>
-                            <td>{{ reversedEvals[currentWeek-1][student_id][evaler][2] }}</td>
+                            <td>{{ reversedEvals[currentWeek-1][student_id][evaler][0].rank }}</td>
+                            <td>{{ reversedEvals[currentWeek-1][student_id][evaler][0].token }}</td>
                             <td>{{ reversedEvals[currentWeek-1][student_id][evaler][0].adjective }}</td>
                             <td>{{ reversedEvals[currentWeek-1][student_id][evaler][0].description }}</td>
                         </tr>
