@@ -272,7 +272,7 @@ class Group_Student(Base):
         }
 
 class ManagerEvalForm(WTForm):
-    choices = [('1','1'),('2','2'),('3','3'),('4','4'),('5','5')]
+    choices = [('5','5'), ('4','4'), ('3','3'), ('2','2'), ('1','1')]
     approachable = RadioField('Approachable', choices=choices, validators=[Optional()])
     communication = RadioField('Communication', choices=choices, validators=[Optional()])
     client_interaction = RadioField('Client Interaction', choices=choices, validators=[Optional()])

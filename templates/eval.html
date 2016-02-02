@@ -67,8 +67,8 @@
             <div class='col-md-8'>             
                 <div class='col-md-3'>
 				  <div class='form-group internal'>
-				    {{eval['adjective'](class='form-control', placeholder='Adjective', style="position:absolute")}}
-                    <select id="{{eval['adjectiveDropDown'].id}}" class='form-control' style="width:110%" onfocus="this.select()">
+				    {{eval['adjective'](class='form-control', placeholder='Adjective', style="position:absolute; width:90%")}}
+                    <select id="{{eval['adjectiveDropDown'].id}}" class='form-control' onfocus="this.select()" tabindex="-1">
                          <optgroup label="Good Adjectives">
                              {% for element in ga %}        
                                 <option value="{{element}}">{{element}}</option>
@@ -96,13 +96,15 @@
     {% if eval['is_manager'].data == 1 %}  
         <div class='manager-panel'>
         <div class='manager-form-header'>Manager Evaluation</div>
-        <div class='questions-message'>Rate your manager on following qualities (5 being highest)</div>
+        <div class='questions-message'>Rate your manager on following qualities.</div>
             <table>
             <tr>
                 <td class='table-col-1'></td>
-                {% for element in eval['managerEval']['approachable'] %}     
-                    <td>{{element.label}}</td>
-                {% endfor %}  
+                <td class="manger-rating-header">Expert</td>
+                <td class="manger-rating-header">Good</td>
+                <td class="manger-rating-header">Avg</td>
+                <td class="manger-rating-header">Bad</td>
+                <td class="manger-rating-header">Poor</td>               
                 <td class='table-col-3'></td>
             </tr>
             {% for managerEval in eval['managerEval'] %}                
@@ -111,7 +113,7 @@
                         {{managerEval.label(class='control-label')}}
                     </td>
                     {% for element in managerEval %}
-                    <td>
+                    <td class="manger-rating-header">
                         {{element}}
                     </td>                      
                     {% endfor %}                        

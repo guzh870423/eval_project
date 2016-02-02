@@ -31,3 +31,8 @@ table{
     float: left;
     text-align: left;
 }
+
+.manger-rating-header{
+    width: 7%;
+    text-align: center;    
+}
