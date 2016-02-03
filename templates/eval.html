@@ -69,6 +69,7 @@
 				  <div class='form-group internal'>
 				    {{eval['adjective'](class='form-control', placeholder='Adjective', style="position:absolute; width:90%")}}
                     <select id="{{eval['adjectiveDropDown'].id}}" class='form-control' onfocus="this.select()" tabindex="-1">
+                         <option selected disabled hidden></option>
                          <optgroup label="Good Adjectives">
                              {% for element in ga %}        
                                 <option value="{{element}}">{{element}}</option>
@@ -78,7 +79,7 @@
                              {% for element in ba %}        
                                 <option value="{{element}}">{{element}}</option>
                              {% endfor %}
-                         </optgroup>
+                         </optgroup>                         
                     </select>                    
 				  </div>
                   <div class='validation-error-message'>{{eval['adjective'].errors[0] }}</div>
