@@ -180,16 +180,16 @@ def manager_report(semester_id, currentWeek):
                 performance_under_stress = performance_under_stress + e.performance_under_stress
                 
             num_of_evalers = len(managerEvals[manager])
-            avgMgrEvals[manager]['approachable_attitude'].append(approachable_attitude/num_of_evalers)
-            avgMgrEvals[manager]['team_communication'].append(team_communication/num_of_evalers)
-            avgMgrEvals[manager]['client_interaction'].append(client_interaction/num_of_evalers)
-            avgMgrEvals[manager]['decision_making'].append(decision_making/num_of_evalers)
-            avgMgrEvals[manager]['resource_utilization'].append(resource_utilization/num_of_evalers)
-            avgMgrEvals[manager]['follow_up_to_completion'].append(follow_up_to_completion/num_of_evalers)
-            avgMgrEvals[manager]['task_delegation_and_ownership'].append(task_delegation_and_ownership/num_of_evalers)
-            avgMgrEvals[manager]['encourage_team_development'].append(encourage_team_development/num_of_evalers)
-            avgMgrEvals[manager]['realistic_expectation'].append(realistic_expectation/num_of_evalers)
-            avgMgrEvals[manager]['performance_under_stress'].append(performance_under_stress/num_of_evalers )
+            avgMgrEvals[manager]['approachable_attitude'].append(round(approachable_attitude/num_of_evalers , round_digits))
+            avgMgrEvals[manager]['team_communication'].append(round(team_communication/num_of_evalers , round_digits))
+            avgMgrEvals[manager]['client_interaction'].append(round(client_interaction/num_of_evalers , round_digits))
+            avgMgrEvals[manager]['decision_making'].append(round(decision_making/num_of_evalers , round_digits))
+            avgMgrEvals[manager]['resource_utilization'].append(round(resource_utilization/num_of_evalers , round_digits))
+            avgMgrEvals[manager]['follow_up_to_completion'].append(round(follow_up_to_completion/num_of_evalers , round_digits))
+            avgMgrEvals[manager]['task_delegation_and_ownership'].append(round(task_delegation_and_ownership/num_of_evalers , round_digits))
+            avgMgrEvals[manager]['encourage_team_development'].append(round(encourage_team_development/num_of_evalers , round_digits))
+            avgMgrEvals[manager]['realistic_expectation'].append(round(realistic_expectation/num_of_evalers , round_digits))
+            avgMgrEvals[manager]['performance_under_stress'].append(round(performance_under_stress/num_of_evalers , round_digits))
                 
     return render_template('manager-report.html', semester=semester, currentWeek=currentWeek, managerEvals=managerEvals, avgMgrEvals=avgMgrEvals, names=names)
 
