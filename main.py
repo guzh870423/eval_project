@@ -117,6 +117,8 @@ def main():
 
 @app.route('/manager-report/<int:semester_id>/<int:currentWeek>', methods=['GET', 'POST'])
 def manager_report(semester_id, currentWeek):
+    if not session:
+        return redirect(url_for('login'))
     # names is a map from "user_name" to "alias_name" (if exists) or "first_name last_name" 
     names = mapNames(queryStudents(semester_id))
     
@@ -494,7 +496,6 @@ def mostFrequentAdjectives(currentWeek, reversedEvals):
         dict = {}
         for evaler in reversedEvals[currentWeek-1][evalee]:
             adjs = reversedEvals[currentWeek-1][evalee][evaler][0].adjective.split(' ,.')
-            print adjs
             for adj in adjs:
                 count = dict.get(adj)
                 if not count:

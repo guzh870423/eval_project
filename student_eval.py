@@ -76,7 +76,7 @@ urlSerializer = URLSafeSerializer(key)
 @app.route('/eval', methods=['GET', 'POST'])
 def list_all():
     try:
-        if not session['app_user']:
+        if not session.get('app_user'):
             return redirect(url_for('login'))
          
         app_user = session['app_user']
@@ -114,6 +114,8 @@ def list_all():
                     dbSession.add(encryptedEval)
                 dbSession.commit()
                 
+                session.pop('app_user')
+                dbSession.close()
                 return render_template('eval-success.html', week=form.evaluations[0]['week'].data)           
             else:
                 return render_template('eval.html',form = form, ga=GOOD_ADJECTIVES, ba=BAD_ADJECTIVES)             
@@ -126,6 +128,8 @@ def list_all():
     number_of_evaluations_submitted = dbSession.query(EncryptedEvaluation).filter(EncryptedEvaluation.week == max_week, EncryptedEvaluation.evaler_id == app_user, EncryptedEvaluation.semester == semester).count()
    
     if number_of_evaluations_submitted > 0:
+        session.pop('app_user')
+        dbSession.close()
         return render_template('resubmitError.html', week=max_week.scalar())
                 
     evaler = aliased(Group_Student)
