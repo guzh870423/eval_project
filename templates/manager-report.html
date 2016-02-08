@@ -19,11 +19,12 @@
     
     {% for mgrEval in managerEvals%}
     <h2/>
+    <hr/>
     <div class="mgr-report-container">
     <div align="center">
         <label id="mgr-name-label">Manager Name</label>: <label id="mgr-name">{{ names[mgrEval] }}</label>
     </div>    
-    <table align="center">
+    <table align="center" name="ratingTable">
         <tr>
             <th>Quality</th>      
             <td style="font-weight:bold">Approachable Attitude</td>
@@ -40,18 +41,19 @@
         {% for evaler in managerEvals[mgrEval]%} 
         <tr>
             <th class="line-break">{{ names[evaler] }}</th> 
-            {% for managerEval in managerEvals[mgrEval][evaler]%}        
-                <td>{{managerEval['approachable_attitude']}}</td>
-                <td>{{managerEval['team_communication']}}</td>
-                <td>{{managerEval['client_interaction']}}</td>
-                <td>{{managerEval['decision_making']}}</td>
-                <td>{{managerEval['resource_utilization']}}</td>
-                <td>{{managerEval['follow_up_to_completion']}}</td>
-                <td>{{managerEval['task_delegation_and_ownership']}}</td>
-                <td>{{managerEval['encourage_team_development']}}</td>
-                <td>{{managerEval['realistic_expectation']}}</td>
-                <td>{{managerEval['performance_under_stress']}}</td>
-                
+            {% for managerEval in managerEvals[mgrEval][evaler]%}  
+                {% if managerEval['approachable_attitude'] != null %}
+                    <td>{{managerEval['approachable_attitude']}}</td>
+                    <td>{{managerEval['team_communication']}}</td>
+                    <td>{{managerEval['client_interaction']}}</td>
+                    <td>{{managerEval['decision_making']}}</td>
+                    <td>{{managerEval['resource_utilization']}}</td>
+                    <td>{{managerEval['follow_up_to_completion']}}</td>
+                    <td>{{managerEval['task_delegation_and_ownership']}}</td>
+                    <td>{{managerEval['encourage_team_development']}}</td>
+                    <td>{{managerEval['realistic_expectation']}}</td>
+                    <td>{{managerEval['performance_under_stress']}}</td>
+                {% endif %}                
             {% endfor %}
         </tr>
         {% endfor %}
@@ -69,13 +71,32 @@
             <td>{{avgMgrEvals[mgrEval]['performance_under_stress']}}</td>
         </tr>
     </table>
+    <br/>
+    <table align="center" class="descTable">
+        <tr>
+            <th>Evalee</th>
+            <th>Description</th>
+        </tr>
+        {% for evaler in managerEvals[mgrEval]%} 
+        <tr>
+            <td class="line-break">{{ names[evaler] }}</td> 
+            {% for managerEval in managerEvals[mgrEval][evaler]%}  
+                {% if managerEval['approachable_attitude'] == null %}
+                    <td>{{managerEval}}</td>                    
+                {% endif %}                
+            {% endfor %}
+        </tr>
+        {% endfor %}        
+    </table>
+    
     </div>
+    
     {% endfor %}    
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
   </body>
 <script type="text/javascript">
 $(document).ready(function() {
-    $("table").each(function () {
+    $('[name=ratingTable]').each(function () {
         var $this = $(this);
         var newrows = [];
         $this.find("tr").each(function () {

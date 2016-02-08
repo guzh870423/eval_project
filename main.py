@@ -135,9 +135,11 @@ def manager_report(semester_id, currentWeek):
         for encrypted_eval in encrypted_evals.all():
             if manager_id == encrypted_eval.evalee_id:
                 encryptedMgrEval = session.query(EncryptedManagerEval).filter_by(manager_id=encrypted_eval.manager_id).first()
-                eval = evalCipher.decryptManagerEval(encryptedMgrEval)
+                mgrEval = evalCipher.decryptManagerEval(encryptedMgrEval)
+                eval = evalCipher.decryptEval(encrypted_eval)
                 managerEvals[manager_id][encrypted_eval.evaler_id] = []
-                managerEvals[manager_id][encrypted_eval.evaler_id].append(eval)
+                managerEvals[manager_id][encrypted_eval.evaler_id].append(mgrEval)
+                managerEvals[manager_id][encrypted_eval.evaler_id].append(eval.description)
         
         for manager in managerEvals:
             avgMgrEvals[manager] = {}
@@ -165,17 +167,17 @@ def manager_report(semester_id, currentWeek):
             performance_under_stress = 0.0
             
             for evaler in managerEvals[manager]:
-                for e in managerEvals[manager][evaler]:
-                    approachable_attitude = approachable_attitude + e.approachable_attitude    
-                    team_communication = team_communication + e.team_communication
-                    client_interaction = client_interaction + e.client_interaction
-                    decision_making = decision_making + e.decision_making
-                    resource_utilization = resource_utilization + e.resource_utilization
-                    follow_up_to_completion = follow_up_to_completion + e.follow_up_to_completion
-                    task_delegation_and_ownership = task_delegation_and_ownership + e.task_delegation_and_ownership
-                    encourage_team_development = encourage_team_development + e.encourage_team_development
-                    realistic_expectation = realistic_expectation + e.realistic_expectation
-                    performance_under_stress = performance_under_stress + e.performance_under_stress
+                e = managerEvals[manager][evaler][0]
+                approachable_attitude = approachable_attitude + e.approachable_attitude    
+                team_communication = team_communication + e.team_communication
+                client_interaction = client_interaction + e.client_interaction
+                decision_making = decision_making + e.decision_making
+                resource_utilization = resource_utilization + e.resource_utilization
+                follow_up_to_completion = follow_up_to_completion + e.follow_up_to_completion
+                task_delegation_and_ownership = task_delegation_and_ownership + e.task_delegation_and_ownership
+                encourage_team_development = encourage_team_development + e.encourage_team_development
+                realistic_expectation = realistic_expectation + e.realistic_expectation
+                performance_under_stress = performance_under_stress + e.performance_under_stress
                 
             num_of_evalers = len(managerEvals[manager])
             avgMgrEvals[manager]['approachable_attitude'].append(approachable_attitude/num_of_evalers)
