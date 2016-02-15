@@ -421,6 +421,7 @@ def generateCharts(currentWeek, students, names, averageRank, averageToken):
             'lineWidth': 2
     },
     {
+            'reversed': True,
             'title': {
                 'text': 'Normalized Token'
             },
