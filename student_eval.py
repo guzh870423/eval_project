@@ -20,6 +20,7 @@ from itsdangerous import URLSafeSerializer
 import socket
 import logging
 from logging.handlers import RotatingFileHandler
+from datetime import timedelta
 
 parser = SafeConfigParser()
 parser.read('config.ini')
@@ -62,10 +63,11 @@ app.config["MAIL_SERVER"] = MAIL_SERVER
 app.config["MAIL_PORT"] = MAIL_PORT
 app.config["MAIL_USE_SSL"] = MAIL_USE_SSL
 app.config["MAIL_DEFAULT_SENDER"] = MAIL_DEFAULT_SENDER
+app.permanent_session_lifetime = timedelta(seconds=3600)
 
 mail = Mail(app)
 
-engine = create_engine('mysql://' + username + ':' + password + '@' + host +':' + port + '/' + schema, pool_recycle=28800) 
+engine = create_engine('mysql://' + username + ':' + password + '@' + host +':' + port + '/' + schema, pool_recycle=3600) 
 Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 dbSession = DBSession()
