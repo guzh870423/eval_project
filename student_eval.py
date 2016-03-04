@@ -63,24 +63,35 @@ app.config["MAIL_SERVER"] = MAIL_SERVER
 app.config["MAIL_PORT"] = MAIL_PORT
 app.config["MAIL_USE_SSL"] = MAIL_USE_SSL
 app.config["MAIL_DEFAULT_SENDER"] = MAIL_DEFAULT_SENDER
-app.permanent_session_lifetime = timedelta(seconds=3600)
+app.permanent_session_lifetime = timedelta(seconds=10800)
 
 mail = Mail(app)
-
-engine = create_engine('mysql://' + username + ':' + password + '@' + host +':' + port + '/' + schema, pool_recycle=3600) 
-Base.metadata.bind = engine
-DBSession = sessionmaker(bind=engine)
-dbSession = DBSession()
+dbSession = None
 
 evalCipher = EvalCipher(key)
 urlSerializer = URLSafeSerializer(key)
+
+def init_dbSession():
+    global dbSession
+    engine = create_engine('mysql://' + username + ':' + password + '@' + host +':' + port + '/' + schema, pool_size=0, pool_recycle=14400)
+    try:
+        engine.connect()
+        Base.metadata.bind = engine
+        DBSession = sessionmaker(autoflush=True, bind=engine)
+        dbSession = DBSession()    
+        return
+    except Exception as e:
+        app.logger.error(e)
+        return render_template("error.html") 
 
 @app.route('/eval', methods=['GET', 'POST'])
 def list_all():
     try:
         if not session.get('app_user'):
+            dbSession.flush()
+            dbSession.close()
             return redirect(url_for('login'))
-         
+        
         app_user = session['app_user']
         if request.method == 'POST':
             form = EvalListForm()
@@ -116,12 +127,13 @@ def list_all():
                     dbSession.add(encryptedEval)
                 dbSession.commit()
                 
-                session.pop('app_user')
-                dbSession.close()
+                clear_session()
                 return render_template('eval-success.html', week=form.evaluations[0]['week'].data)           
             else:
                 return render_template('eval.html',form = form, ga=GOOD_ADJECTIVES, ba=BAD_ADJECTIVES)             
     except Exception as e:
+            dbSession.flush()
+            dbSession.close()
             app.logger.error(e)
             return render_template("error.html") 
     
@@ -130,8 +142,7 @@ def list_all():
     number_of_evaluations_submitted = dbSession.query(EncryptedEvaluation).filter(EncryptedEvaluation.week == max_week, EncryptedEvaluation.evaler_id == app_user, EncryptedEvaluation.semester == semester).count()
    
     if number_of_evaluations_submitted > 0:
-        session.pop('app_user')
-        dbSession.close()
+        clear_session()
         return render_template('resubmitError.html', week=max_week.scalar())
                 
     evaler = aliased(Group_Student)
@@ -170,6 +181,9 @@ def list_all():
 def login():
     error = None
     if request.method == 'POST':
+        if dbSession is None:
+            init_dbSession()
+        
         try:
             app_user = request.form['username']
             app_user_pwd = request.form['password']
@@ -188,11 +202,16 @@ def login():
     
 @app.route('/logout')
 def logout():
-    session.pop('app_user')
-    dbSession.close()
+    clear_session()
     app.logger.info('User has logged out successfully.')
     flash('You have been logged out successfully')
     return redirect(url_for('login'))
+    
+def clear_session():
+    session.pop('app_user')
+    dbSession.flush()
+    dbSession.close()
+    return
 
 @app.route('/reset-password', methods=('GET', 'POST',))
 def forgot_password():
@@ -203,7 +222,6 @@ def forgot_password():
             user = dbSession.query(Student).filter_by(user_name=user_name).first()
             if user:
                 token = user.get_token()
-                print app.config
                 url = APP_HOST + ':' + APP_PORT + url_for('verify_user') + '?token=' + token
                 user = urlSerializer.dumps({"user":user.email})
                 url = urlSerializer.dumps({"url":url})
