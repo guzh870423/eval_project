@@ -73,6 +73,7 @@ urlSerializer = URLSafeSerializer(key)
 
 def init_dbSession():
     global dbSession
+    app.logger.debug('Attempting DB connection via: '+ username)
     engine = create_engine('mysql://' + username + ':' + password + '@' + host +':' + port + '/' + schema, pool_size=0, pool_recycle=14400)
     try:
         engine.connect()
@@ -93,6 +94,7 @@ def list_all():
             return redirect(url_for('login'))
         
         app_user = session['app_user']
+        app.logger.debug('Currently logged in user : '+ app_user)
         if request.method == 'POST':
             form = EvalListForm()
             if form.validate_on_submit():
@@ -185,6 +187,7 @@ def login():
             init_dbSession()
         
         try:
+            app.logger.debug('Attempting User login: '+ request.form['username'])
             app_user = request.form['username']
             app_user_pwd = request.form['password']
             users = dbSession.query(Student).all()
@@ -208,6 +211,7 @@ def logout():
     return redirect(url_for('login'))
     
 def clear_session():
+    app.logger.debug('Clearing Session...')
     session.pop('app_user')
     dbSession.flush()
     dbSession.close()
@@ -220,6 +224,7 @@ def forgot_password():
         if form.validate_on_submit():
             user_name = form.user_name.data
             user = dbSession.query(Student).filter_by(user_name=user_name).first()
+            app.logger.debug('Attempting to request a new password: '+ user_name)
             if user:
                 token = user.get_token()
                 url = APP_HOST + ':' + APP_PORT + url_for('verify_user') + '?token=' + token
@@ -236,6 +241,7 @@ def verify_user():
             user_name = form.user_name.data
             pwd = form.password.data
             confirm = form.confirm.data
+            app.logger.debug('Attempting to verify user to reset password: '+ user_name)
             if pwd == confirm:
                 student = dbSession.query(Student).filter_by(user_name=user_name).update({Student.login_pwd: pwd})
                 dbSession.commit()
