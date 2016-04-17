@@ -89,8 +89,7 @@ def init_dbSession():
 def list_all():
     try:
         if not session.get('app_user'):
-            dbSession.flush()
-            dbSession.close()
+            clear_DBsession()
             return redirect(url_for('login'))
         
         app_user = session['app_user']
@@ -134,8 +133,7 @@ def list_all():
             else:
                 return render_template('eval.html',form = form, ga=GOOD_ADJECTIVES, ba=BAD_ADJECTIVES)             
     except Exception as e:
-            dbSession.flush()
-            dbSession.close()
+            clear_DBsession()
             app.logger.error(e)
             return render_template("error.html") 
     
@@ -211,16 +209,25 @@ def logout():
     return redirect(url_for('login'))
     
 def clear_session():
-    app.logger.debug('Clearing Session...')
+    app.logger.debug('Clearing User Session...')
     session.pop('app_user')
-    dbSession.flush()
-    dbSession.close()
+    clear_DBsession()
+    return
+
+def clear_DBsession():
+    app.logger.debug('Clearing DB Session...')
+    if dbSession is not None:
+        dbSession.flush()
+        dbSession.close()
     return
 
 @app.route('/reset-password', methods=('GET', 'POST',))
 def forgot_password():
     form = ResetPassword()
     if request.method == 'POST':
+        if dbSession is None:
+            init_dbSession()
+        
         if form.validate_on_submit():
             user_name = form.user_name.data
             user = dbSession.query(Student).filter_by(user_name=user_name).first()
