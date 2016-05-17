@@ -71,14 +71,19 @@ dbSession = None
 evalCipher = EvalCipher(key)
 urlSerializer = URLSafeSerializer(key)
 
+#Create SessionMaker just once
+engine = create_engine('mysql://' + username + ':' + password + '@' + host +':' + port + '/' + schema, pool_size=0, pool_recycle=14400)
+try:
+    engine.connect()
+    Base.metadata.bind = engine
+    DBSession = sessionmaker(autoflush=True, bind=engine)
+except Exception as e:
+    app.logger.error(e)
+
 def init_dbSession():
     global dbSession
     app.logger.debug('Attempting DB connection via: '+ username)
-    engine = create_engine('mysql://' + username + ':' + password + '@' + host +':' + port + '/' + schema, pool_size=0, pool_recycle=14400)
     try:
-        engine.connect()
-        Base.metadata.bind = engine
-        DBSession = sessionmaker(autoflush=True, bind=engine)
         dbSession = DBSession()    
         return
     except Exception as e:
