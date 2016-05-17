@@ -133,6 +133,8 @@ def list_all():
             else:
                 return render_template('eval.html',form = form, ga=GOOD_ADJECTIVES, ba=BAD_ADJECTIVES)             
     except Exception as e:
+            if dbSession is not None:
+                dbSession.rollback()
             clear_DBsession()
             app.logger.error(e)
             return render_template("error.html") 
