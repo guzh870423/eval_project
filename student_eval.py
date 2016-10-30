@@ -52,6 +52,8 @@ BAD_ADJECTIVES = parser.get('adjectives', 'BAD_ADJECTIVES').replace(' ','').spli
 GOOD_ADJECTIVES.sort()
 BAD_ADJECTIVES.sort()
 
+LIMIT_EVALS_TO_CURRENT_WEEK = parser.get('limitevals', 'LIMIT_TO_CURRENT_WEEK')
+
 parser.read('semester_encryption_keys.ini')
 key = parser.get('encryptionkeys', CURRENT_SEASON + '-' + str(CURRENT_YEAR) + '-' + CURRENT_COURSE_NO)
 
@@ -157,7 +159,12 @@ def list_all():
 
     sub_groups = dbSession.query(Groups.week, Groups.id.label('GROUP_ID'), Group_Student.student_id).filter(Groups.id==Group_Student.group_id, Groups.week==max_week, Groups.semester==semester).subquery()
 
-    sub_student_evals = dbSession.query(Groups.week, Groups.id, evaler.student_id.label('EVALER_ID'), evalee.student_id.label('EVALEE_ID')).filter(Groups.id==evaler.group_id, evaler.group_id==evalee.group_id, evaler.student_id<>evalee.student_id, evaler.student_id==app_user, Groups.semester==semester).order_by(Groups.week, evaler.student_id, evalee.student_id).subquery()
+    #Use this flag to limit evaluations of students in the current week (Fix for P532 project phase)
+    limit = 0
+    if LIMIT_EVALS_TO_CURRENT_WEEK == 'True':
+        limit = max_week
+
+    sub_student_evals = dbSession.query(Groups.week, Groups.id, evaler.student_id.label('EVALER_ID'), evalee.student_id.label('EVALEE_ID')).filter(Groups.id==evaler.group_id, evaler.group_id==evalee.group_id, evaler.student_id<>evalee.student_id, evaler.student_id==app_user, Groups.semester==semester, Groups.week >= limit).order_by(Groups.week, evaler.student_id, evalee.student_id).subquery()
 
     current_evals = dbSession.query(sub_groups.c.week.label('WEEK'), sub_student_evals.c.EVALER_ID, sub_student_evals.c.EVALEE_ID).filter(sub_groups.c.week >= sub_student_evals.c.week, sub_groups.c.student_id == sub_student_evals.c.EVALER_ID).group_by(sub_groups.c.week.label('WEEK'), sub_student_evals.c.EVALER_ID, sub_student_evals.c.EVALEE_ID).order_by(sub_groups.c.week, sub_student_evals.c.EVALER_ID).subquery()
    
